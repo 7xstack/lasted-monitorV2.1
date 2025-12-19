@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "E:\\maxirix\\lasted-monitorV2.1\\ws\\log\\.0bf1f28a57e94c4e9594591c7622fc64686c03ad-audit.json",
+    "files": [
+        {
+            "date": 1766123569891,
+            "name": "E:\\maxirix\\lasted-monitorV2.1\\ws\\log\\combined-2025-12-19.log",
+            "hash": "7efa3cb64d0d859897a2a35b831e42f11b7df8fe19d21e4d481b1c219eb244ff"
+        }
+    ],
+    "hashType": "sha256"
+}

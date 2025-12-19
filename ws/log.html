@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Log Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .status-dot-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Custom scrollbar */
+        .log-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .log-container::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 5px;
+        }
+
+        .log-container::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+    </style>
+</head>
+<body class="bg-[#0d1117] text-[#c9d1d9] h-screen flex flex-col overflow-hidden font-sans">
+    <!-- Header -->
+    <div class="bg-[#161b22] border-b border-[#30363d] px-5 py-3 flex items-center justify-between flex-shrink-0">
+        <h1 class="text-lg font-semibold text-[#f0f6fc] flex items-center gap-2">
+            <!-- <i data-lucide="file-text" class="w-5 h-5"></i> -->
+            <img src="assets/logo-qfit.png" alt="icon" class="w-5 h-5">
+            <span>Monitor Log Viewer</span>
+        </h1>
+        <div class="flex gap-2.5 items-center">
+            <div class="flex items-center gap-2 text-sm">
+                <span id="statusDot" class="w-2 h-2 rounded-full bg-[#f85149] status-dot-pulse"></span>
+                <span id="statusText">กำลังเชื่อมต่อ...</span>
+            </div>
+            <button id="clearBtn" class="bg-[#21262d] border border-[#30363d] text-[#c9d1d9] px-3 py-1.5 rounded-md cursor-pointer text-xs transition-all hover:bg-[#30363d] hover:border-[#484f58] active:scale-[0.98] flex items-center gap-1.5">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                <span>ล้าง Logs</span>
+            </button>
+            <button id="autoScrollBtn" class="bg-[#21262d] border border-[#30363d] text-[#c9d1d9] px-3 py-1.5 rounded-md cursor-pointer text-xs transition-all hover:bg-[#30363d] hover:border-[#484f58] active:scale-[0.98] flex items-center gap-1.5">
+                <i data-lucide="pin" class="w-3.5 h-3.5" id="autoScrollIcon"></i>
+                <span id="autoScrollText">Auto-scroll: ON</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-[#161b22] border-b border-[#30363d] px-5 py-2.5 flex gap-2.5 items-center flex-shrink-0">
+        <div class="flex-1 relative">
+            <i data-lucide="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6e7681] pointer-events-none"></i>
+            <input 
+                type="text" 
+                id="filterInput" 
+                placeholder="กรอง logs (พิมพ์เพื่อค้นหา...)" 
+                class="w-full bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] pl-8 pr-3 py-1.5 rounded-md text-xs focus:outline-none focus:border-[#58a6ff] focus:ring-2 focus:ring-[#58a6ff]/10"
+            >
+        </div>
+        <button id="filterLevelBtn" class="bg-[#21262d] border border-[#30363d] text-[#c9d1d9] px-3 py-1.5 rounded-md cursor-pointer text-xs transition-all hover:bg-[#30363d] hover:border-[#484f58] active:scale-[0.98] flex items-center gap-1.5">
+            <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+            <span id="filterLevelText">ระดับ: ทั้งหมด</span>
+        </button>
+    </div>
+
+    <!-- Log Container -->
+    <div id="logContainer" class="log-container flex-1 overflow-y-auto p-2.5 font-mono text-xs leading-relaxed">
+        <div class="empty-state text-center py-[60px] px-5 text-[#6e7681]">
+            <h2 class="text-lg mb-2 text-[#8b949e]">รอการเชื่อมต่อ...</h2>
+            <p>กำลังเชื่อมต่อกับ WebSocket server...</p>
+        </div>
+    </div>
+
+    <!-- Auto-scroll Indicator -->
+    <div id="autoScrollIndicator" class="fixed bottom-5 right-5 bg-[#21262d] border border-[#30363d] px-3 py-2 rounded-md text-xs text-[#c9d1d9] hidden">
+        Auto-scroll ถูกปิด
+    </div>
+
+    <script>
+        const logContainer = document.getElementById('logContainer');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const clearBtn = document.getElementById('clearBtn');
+        const autoScrollBtn = document.getElementById('autoScrollBtn');
+        const filterInput = document.getElementById('filterInput');
+        const filterLevelBtn = document.getElementById('filterLevelBtn');
+        const autoScrollIndicator = document.getElementById('autoScrollIndicator');
+
+        let ws = null;
+        let logs = [];
+        let autoScroll = true;
+        let currentFilter = '';
+        let currentLevel = 'all';
+        let logCount = 0;
+        const maxLogs = 10000;
+
+        const levels = ['all', 'log', 'info', 'warn', 'error'];
+        let currentLevelIndex = 0;
+
+        // Color mappings for log levels
+        const levelColors = {
+            log: { border: 'border-l-[#58a6ff]', bg: 'bg-[#58a6ff]/20', text: 'text-[#58a6ff]' },
+            info: { border: 'border-l-[#58a6ff]', bg: 'bg-[#58a6ff]/20', text: 'text-[#58a6ff]' },
+            warn: { border: 'border-l-[#d29922]', bg: 'bg-[#d29922]/10', text: 'text-[#d29922]' },
+            error: { border: 'border-l-[#f85149]', bg: 'bg-[#f85149]/10', text: 'text-[#f85149]' }
+        };
+
+        function formatTimestamp() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ms = String(now.getMilliseconds()).padStart(3, '0');
+            return `${hours}:${minutes}:${seconds}.${ms}`;
+        }
+
+        function addLog(level, message, originalLevel = null) {
+            const timestamp = formatTimestamp();
+            const logEntry = {
+                id: logCount++,
+                timestamp,
+                level: originalLevel || level,
+                message: typeof message === 'object' ? JSON.stringify(message, null, 2) : String(message)
+            };
+
+            logs.push(logEntry);
+
+            if (logs.length > maxLogs) {
+                logs.shift();
+                const firstEntry = logContainer.querySelector('.log-entry');
+                if (firstEntry) firstEntry.remove();
+            }
+
+            if (shouldShowLog(logEntry)) {
+                renderLog(logEntry);
+            }
+
+            if (autoScroll) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        function shouldShowLog(logEntry) {
+            if (currentLevel !== 'all' && logEntry.level !== currentLevel) {
+                return false;
+            }
+
+            if (currentFilter) {
+                const searchText = currentFilter.toLowerCase();
+                return logEntry.message.toLowerCase().includes(searchText) ||
+                       logEntry.timestamp.includes(searchText) ||
+                       logEntry.level.toLowerCase().includes(searchText);
+            }
+
+            return true;
+        }
+
+        function renderLog(logEntry) {
+            const entryDiv = document.createElement('div');
+            const colors = levelColors[logEntry.level] || levelColors.log;
+            
+            entryDiv.className = `log-entry ${logEntry.level} py-1 px-2 mb-0.5 border-l-[3px] ${colors.border} ${colors.bg} rounded-sm break-words whitespace-pre-wrap transition-colors hover:bg-[#6e7681]/10`;
+            
+            entryDiv.innerHTML = `
+                <span class="log-timestamp text-[#6e7681] mr-2 select-none">${logEntry.timestamp}</span>
+                <span class="log-level ${logEntry.level} inline-block px-1.5 py-0.5 rounded-sm text-[10px] font-semibold mr-2 uppercase ${colors.bg} ${colors.text}">${logEntry.level}</span>
+                <span class="log-message text-[#c9d1d9]">${escapeHtml(logEntry.message)}</span>
+            `;
+            logContainer.appendChild(entryDiv);
+
+            const emptyState = logContainer.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function clearLogs() {
+            logs = [];
+            logContainer.innerHTML = '<div class="empty-state text-center py-[60px] px-5 text-[#6e7681]"><h2 class="text-lg mb-2 text-[#8b949e]">ไม่มี Logs</h2><p>รอรับ logs จาก server...</p></div>';
+            logCount = 0;
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            const autoScrollText = document.getElementById('autoScrollText');
+            const autoScrollIcon = document.getElementById('autoScrollIcon');
+            
+            autoScrollText.textContent = `Auto-scroll: ${autoScroll ? 'ON' : 'OFF'}`;
+            
+            // เปลี่ยน icon ระหว่าง pin และ pin-off
+            if (autoScroll) {
+                autoScrollIcon.setAttribute('data-lucide', 'pin');
+            } else {
+                autoScrollIcon.setAttribute('data-lucide', 'pin-off');
+            }
+            lucide.createIcons();
+            
+            if (autoScroll) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+                autoScrollIndicator.classList.add('hidden');
+            } else {
+                autoScrollIndicator.classList.remove('hidden');
+            }
+        }
+
+        function cycleFilterLevel() {
+            currentLevelIndex = (currentLevelIndex + 1) % levels.length;
+            currentLevel = levels[currentLevelIndex];
+            const filterLevelText = document.getElementById('filterLevelText');
+            filterLevelText.textContent = `ระดับ: ${currentLevel === 'all' ? 'ทั้งหมด' : currentLevel}`;
+            filterLogs();
+        }
+
+        function filterLogs() {
+            logContainer.innerHTML = '';
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state text-center py-[60px] px-5 text-[#6e7681]';
+            emptyState.innerHTML = '<h2 class="text-lg mb-2 text-[#8b949e]">ไม่มี Logs</h2><p>ไม่มี logs ที่ตรงกับเงื่อนไขการกรอง...</p>';
+            logContainer.appendChild(emptyState);
+
+            let hasVisibleLogs = false;
+            logs.forEach(log => {
+                if (shouldShowLog(log)) {
+                    renderLog(log);
+                    hasVisibleLogs = true;
+                }
+            });
+
+            if (hasVisibleLogs) {
+                const emptyState = logContainer.querySelector('.empty-state');
+                if (emptyState) emptyState.remove();
+            }
+
+            if (autoScroll) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                return;
+            }
+
+            statusText.textContent = 'กำลังเชื่อมต่อ...';
+            statusDot.classList.remove('bg-[#3fb950]');
+            statusDot.classList.add('bg-[#f85149]', 'status-dot-pulse');
+
+            try {
+                ws = new WebSocket('ws://localhost:1100');
+
+                ws.onopen = () => {
+                    statusText.textContent = 'เชื่อมต่อแล้ว';
+                    statusDot.classList.remove('bg-[#f85149]', 'status-dot-pulse');
+                    statusDot.classList.add('bg-[#3fb950]');
+                    
+                    ws.send(JSON.stringify({ type: 'log_viewer' }));
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.type === 'log') {
+                            addLog(data.level || 'log', data.message, data.level);
+                        } else if (data.type === 'error') {
+                            addLog('error', data.message || data.error || JSON.stringify(data), 'error');
+                        } else {
+                            addLog('info', JSON.stringify(data, null, 2), 'info');
+                        }
+                    } catch (e) {
+                        addLog('log', event.data, 'log');
+                    }
+                };
+
+                ws.onclose = () => {
+                    statusText.textContent = 'ตัดการเชื่อมต่อ';
+                    statusDot.classList.remove('bg-[#3fb950]');
+                    statusDot.classList.add('bg-[#f85149]', 'status-dot-pulse');
+                    
+                    setTimeout(connect, 3000);
+                };
+
+                ws.onerror = (error) => {
+                    statusText.textContent = 'เกิดข้อผิดพลาด';
+                    statusDot.classList.remove('bg-[#3fb950]');
+                    statusDot.classList.add('bg-[#f85149]', 'status-dot-pulse');
+                    addLog('error', 'WebSocket connection error', 'error');
+                };
+            } catch (error) {
+                statusText.textContent = 'ไม่สามารถเชื่อมต่อได้';
+                statusDot.classList.remove('bg-[#3fb950]');
+                statusDot.classList.add('bg-[#f85149]', 'status-dot-pulse');
+                addLog('error', `Connection error: ${error.message}`, 'error');
+                
+                setTimeout(connect, 3000);
+            }
+        }
+
+        // Event listeners
+        clearBtn.addEventListener('click', clearLogs);
+        autoScrollBtn.addEventListener('click', toggleAutoScroll);
+        filterLevelBtn.addEventListener('click', cycleFilterLevel);
+        
+        filterInput.addEventListener('input', (e) => {
+            currentFilter = e.target.value;
+            filterLogs();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                filterInput.focus();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                clearLogs();
+            }
+        });
+
+        // เริ่มเชื่อมต่อ
+        connect();
+        
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import sql from 'mssql';
 import dotenv from 'dotenv';
+import { info, error, warn } from './logger.js';
 
 dotenv.config();
 
@@ -23,10 +24,10 @@ export const connectDb = async () => {
       return pool;
     }
     pool = await sql.connect(config);
-    console.log('Connected to SQL Server');
+    info('Connected to SQL Server');
     return pool;
   } catch (err) {
-    console.error('Database connection failed:', err);
+    error('Database connection failed:', err);
     // Don't exit the process, just log the error. The app might try to reconnect.
     pool = null; // Reset pool on connection error
     throw err; // Rethrow error to be caught by the caller
@@ -50,11 +51,11 @@ export const getDepartmentLoad = async (settingId) => {
             return result.recordset[0].department_load;
         }
         
-        console.warn(`No 'department_load' found for setting ID ${settingId}.`);
+        warn(`No 'department_load' found for setting ID ${settingId}.`);
         return null; // No setting found or department_load is empty/null
-    } catch (error) {
-        console.error(`Failed to get department load for setting ID ${settingId}:`, error);
-        throw error; // Re-throw to be handled by the caller
+    } catch (err) {
+        error(`Failed to get department load for setting ID ${settingId}:`, err);
+        throw err; // Re-throw to be handled by the caller
     }
 };
 export const getSetting = async (settingId) => {
@@ -82,11 +83,11 @@ export const getSetting = async (settingId) => {
             };
         }
         
-        console.warn(`No settings found for setting ID ${settingId}.`);
+        warn(`No settings found for setting ID ${settingId}.`);
         return null; 
-    } catch (error) {
-        console.error(`Failed to get settings for setting ID ${settingId}:`, error);
-        throw error;
+    } catch (err) {
+        error(`Failed to get settings for setting ID ${settingId}:`, err);
+        throw err;
     }
 };
 export const getStylePopup = async (settingId) => {
@@ -106,11 +107,11 @@ export const getStylePopup = async (settingId) => {
             return result.recordset[0].style_voice;
         }
         
-        console.warn(`No 'style_voice' found for setting ID ${settingId}.`);
+        warn(`No 'style_voice' found for setting ID ${settingId}.`);
         return null; // No setting found or style_voice is empty/null
-    } catch (error) {
-        console.error(`Failed to get style popup for setting ID ${settingId}:`, error);
-        throw error; // Re-throw to be handled by the caller
+    } catch (err) {
+        error(`Failed to get style popup for setting ID ${settingId}:`, err);
+        throw err; // Re-throw to be handled by the caller
     }
 };
 export const getDepartmentRoomLoad = async (settingId) => {
@@ -124,11 +125,11 @@ export const getDepartmentRoomLoad = async (settingId) => {
     if (result.recordset.length > 0 && result.recordset[0].department_room_load) {
       return result.recordset[0].department_room_load;
     }
-    console.warn(`No 'department_room_load' found for setting ID ${settingId}.`);
+    warn(`No 'department_room_load' found for setting ID ${settingId}.`);
     return null;
-  } catch (error) {
-    console.error(`Failed to get department room load for setting ID ${settingId}:`, error);
-    throw error;
+  } catch (err) {
+    error(`Failed to get department room load for setting ID ${settingId}:`, err);
+    throw err;
   }
 };
 

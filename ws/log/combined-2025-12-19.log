@@ -1,0 +1,22 @@
+2025-12-19 12:52:49.908 [INFO ] WebSocket server is running on ws://localhost:1100 {"service":"websocket-server"}
+2025-12-19 12:52:50.033 [INFO ] Connected to SQL Server {"service":"websocket-server"}
+2025-12-19 12:56:41.161 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 12:56:41.221 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 12:58:48.743 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 12:58:49.182 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 12:58:49.195 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 12:58:54.144 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 12:58:54.222 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 12:58:54.232 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 12:59:33.960 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 12:59:34.050 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 12:59:34.059 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 12:59:50.902 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 12:59:51.133 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 12:59:51.142 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 13:00:07.979 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 13:00:08.059 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 13:00:08.069 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 13:00:15.834 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 13:00:15.916 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 13:00:15.930 [INFO ] Log viewer connected {"service":"websocket-server"}
