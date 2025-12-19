@@ -21,7 +21,7 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames }
   // Render service cards based on settings
   const renderServiceCards = () => {
     if (setting.table_arr === 'true') {
-      // ถ้าเปิดการเรียงห้อง (arr_l) ให้เรียง station ตามเวลาที่ checkin ล่าสุด
+      // ถ้าเปิดการเรียงห้อง (arr_l) ให้เรียง station ตาม time_call ล่าสุด
       // แต่ยังแสดงทุก station ตาม tableNames หรือ amount_boxL
       
       // สร้าง map ของเวลาที่ checkin ล่าสุดในแต่ละ station
@@ -31,14 +31,13 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames }
         const station = String(patient.station || '').trim();
         if (!station) return;
         
-        // ใช้ check_in เป็นหลัก ถ้าไม่มีใช้ time_call
-        const checkIn = typeof patient.check_in === 'string' ? patient.check_in : null;
+        // ใช้ time_call สำหรับเรียงลำดับ
         const timeCall = typeof patient.time_call === 'string' ? patient.time_call : null;
-        const checkInTime = (checkIn || timeCall) ? new Date(checkIn || timeCall || 0).getTime() : 0;
+        const timeCallTime = timeCall ? new Date(timeCall).getTime() : 0;
         
         const existing = stationCheckInMap.get(station);
-        if (!existing || checkInTime > existing) {
-          stationCheckInMap.set(station, checkInTime);
+        if (!existing || timeCallTime > existing) {
+          stationCheckInMap.set(station, timeCallTime);
         }
       });
       
@@ -53,8 +52,8 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames }
         });
       }
       
-      // เรียง station ตามเวลาที่ checkin ล่าสุด DESC (ใหม่สุดก่อน)
-      // Station ที่ไม่มีข้อมูลจะอยู่ท้ายสุด (checkInTime = 0)
+      // เรียง station ตาม time_call ล่าสุด DESC (ใหม่สุดก่อน)
+      // Station ที่ไม่มีข้อมูลจะอยู่ท้ายสุด (timeCallTime = 0)
       const sortedStations = stationsToShow.sort((a, b) => {
         const timeA = stationCheckInMap.get(a) || 0;
         const timeB = stationCheckInMap.get(b) || 0;

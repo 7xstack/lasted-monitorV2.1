@@ -47,7 +47,7 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
                         key={queue.id || queueIndex}
                         className={styles.lockPositionContent}
                         style={
-                          setting.urgent_color === "true" && queue?.Color
+                            setting.urgent_color === "true" && queue?.Color
                             ? {
                                 backgroundColor: typeof queue.Color === "string" ? queue.Color : String(queue.Color),
                               }
@@ -87,14 +87,12 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
           return priorityB - priorityA; // DESC: สูงสุดก่อน
         }
         
-        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม check_in DESC (ใหม่สุดก่อน)
-        const checkInA = typeof a.check_in === 'string' ? a.check_in : null;
-        const checkInB = typeof b.check_in === 'string' ? b.check_in : null;
+        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม time_call DESC (ใหม่สุดก่อน)
         const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
         const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
         
-        const timeA = (checkInA || timeCallA) ? new Date(checkInA || timeCallA || 0).getTime() : 0;
-        const timeB = (checkInB || timeCallB) ? new Date(checkInB || timeCallB || 0).getTime() : 0;
+        const timeA = timeCallA ? new Date(timeCallA).getTime() : 0;
+        const timeB = timeCallB ? new Date(timeCallB).getTime() : 0;
         
         return timeB - timeA; // DESC: ใหม่สุดก่อน
       })
@@ -122,6 +120,13 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
                 <div className={styles.headerItem}>
                   <User className={styles.headerIcon} size={20} />
                   <span>ชื่อ-นามสกุล</span>
+                </div>
+              </th>
+            )}
+            {setting.time_col === 'true' && (
+              <th className={styles.tableHeader}>
+                <div className={styles.headerItem}>
+                  <span>เวลารอ</span>
                 </div>
               </th>
             )}
@@ -179,6 +184,22 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
                     </span>
                   </td>
                 )}
+                {setting.time_col === 'true' && (
+                  <td className={styles.tableCell}>
+                    <span 
+                      className={styles.patientName}
+                      style={{ 
+                        color: setting.urgent_color === 'true' && visit.Color as string
+                          ? visit.Color as string
+                          : '#0c266d' 
+                      }}
+                    >
+                      {visit.waiting_time === null || visit.waiting_time === undefined || visit.waiting_time === 'None' || String(visit.waiting_time).toLowerCase() === 'null'
+                        ? '-'
+                        : String(visit.waiting_time)}
+                    </span>
+                  </td>
+                )}
                 {setting.urgent_level === 'true' && (
                   <td className={styles.tableCell}>
                     <div className={styles.urgentLevel}>
@@ -209,7 +230,13 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
             ))
           ) : (
             <tr>
-              <td colSpan={setting.urgent_level === 'true' ? 3 : 2} className={styles.noData}>
+              <td colSpan={
+                1 + // หมายเลข
+                (setting.stem_surname_table !== 'name' ? 1 : 0) + // ชื่อ-นามสกุล
+                (setting.time_col === 'true' ? 1 : 0) + // เวลารอ
+                (setting.urgent_level === 'true' ? 1 : 0) + // ระดับความเร่งด่วน
+                (setting.status_patient === 'true' ? 1 : 0) // สถานะ
+              } className={styles.noData}>
                 {setting.n_listtable || 'ไม่มีข้อมูล'}
               </td>
             </tr>

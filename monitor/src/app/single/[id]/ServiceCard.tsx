@@ -40,7 +40,7 @@ export default function ServiceCard({
       <div
         className={styles.actionBox}
         style={
-          setting.urgent_color === "true" && activePatient?.urgent_color
+            setting.urgent_color === "true" && activePatient?.urgent_color
             ? { backgroundColor: activePatient.urgent_color }
             : setting.color_static
             ? setting.color_static.includes('gradient') || setting.color_static.includes('linear-gradient') || setting.color_static.includes('radial-gradient')

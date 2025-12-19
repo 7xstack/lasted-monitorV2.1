@@ -1,9 +1,10 @@
 import { Setting, VisitInfo } from './types';
 
-// ฟังก์ชันสำหรับซ่อนนามสกุล (แสดงเป็น XXX สามตัว)
+// ฟังก์ชันสำหรับซ่อนนามสกุล (แสดง 3 ตัวแรก + XXX)
 export const maskSurname = (surname: string | number | boolean | null | undefined): string => {
   if (!surname || surname === '-' || typeof surname !== 'string') return '-';
-  return 'XXX';
+  const firstThree = surname.substring(0, 3); // เอา 3 ตัวแรก
+  return `${firstThree}XXX`;
 };
 
 export const formatPatientName = (setting: Setting, visit: VisitInfo): string => {
