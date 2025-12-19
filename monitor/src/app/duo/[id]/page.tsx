@@ -212,8 +212,8 @@ export default function DuoPage({ params }: { params: Promise<{ id: string }> })
   const [showCallPopup, setShowCallPopup] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const [adsLeftUrl, setAdsLeftUrl] = useState<string | null>(null);
-  const [adsRightUrl, setAdsRightUrl] = useState<string | null>(null);
+  // const [adsLeftUrl, setAdsLeftUrl] = useState<string | null>(null);
+  // const [adsRightUrl, setAdsRightUrl] = useState<string | null>(null);
   const [adsFullUrl, setAdsFullUrl] = useState<string | null>(null);
   // แสดงโฆษณาแบบหน้าแยก (overlay) หลังหน่วงเวลา และแสดงค้าง 20 วิ
   const [showSplitAd, setShowSplitAd] = useState(false);
@@ -268,8 +268,8 @@ export default function DuoPage({ params }: { params: Promise<{ id: string }> })
   // โหลดโฆษณาฝั่งซ้าย/ขวาเมื่อ enable_ads = true และ ads_type = 'left' หรือ 'right'
   useEffect(() => {
     if (!setting) {
-      setAdsLeftUrl(null);
-      setAdsRightUrl(null);
+      // setAdsLeftUrl(null);
+      // setAdsRightUrl(null);
       setAdsFullUrl(null);
       return;
     }
@@ -282,8 +282,8 @@ export default function DuoPage({ params }: { params: Promise<{ id: string }> })
         setting.ads !== 'false');
 
     if (!enableAds) {
-      setAdsLeftUrl(null);
-      setAdsRightUrl(null);
+      // setAdsLeftUrl(null);
+      // setAdsRightUrl(null);
       setAdsFullUrl(null);
       return;
     }
@@ -295,40 +295,40 @@ export default function DuoPage({ params }: { params: Promise<{ id: string }> })
         fullPath = String(setting.ads);
       }
       setAdsFullUrl(fullPath || null);
-      setAdsLeftUrl(null);
-      setAdsRightUrl(null);
+      // setAdsLeftUrl(null);
+      // setAdsRightUrl(null);
       return;
     }
 
     // โฆษณาฝั่งซ้าย
-    if (adsType === 'left') {
-      let leftPath = setting.ads_path_left;
-      // ถ้า API ยังไม่ได้ส่ง ads_path_left มา ให้ใช้ค่าใน ads แทน (กรณี ads_type = 'left')
-      if (!leftPath && setting.ads) {
-        leftPath = String(setting.ads);
-      }
-      setAdsLeftUrl(leftPath || null);
-      setAdsRightUrl(null);
-      setAdsFullUrl(null);
-      return;
-    }
+    // if (adsType === 'left') {
+    //   let leftPath = setting.ads_path_left;
+    //   // ถ้า API ยังไม่ได้ส่ง ads_path_left มา ให้ใช้ค่าใน ads แทน (กรณี ads_type = 'left')
+    //   if (!leftPath && setting.ads) {
+    //     leftPath = String(setting.ads);
+    //   }
+    //   setAdsLeftUrl(leftPath || null);
+    //   setAdsRightUrl(null);
+    //   setAdsFullUrl(null);
+    //   return;
+    // }
 
     // โฆษณาฝั่งขวา
-    if (adsType === 'right') {
-      let rightPath = setting.ads_path_right;
-      // ถ้า API ยังไม่ได้ส่ง ads_path_right มา ให้ใช้ค่าใน ads แทน (กรณี ads_type = 'right')
-      if (!rightPath && setting.ads) {
-        rightPath = String(setting.ads);
-      }
-      setAdsRightUrl(rightPath || null);
-      setAdsLeftUrl(null);
-      setAdsFullUrl(null);
-      return;
-    }
+    // if (adsType === 'right') {
+    //   let rightPath = setting.ads_path_right;
+    //   // ถ้า API ยังไม่ได้ส่ง ads_path_right มา ให้ใช้ค่าใน ads แทน (กรณี ads_type = 'right')
+    //   if (!rightPath && setting.ads) {
+    //     rightPath = String(setting.ads);
+    //   }
+    //   setAdsRightUrl(rightPath || null);
+    //   setAdsLeftUrl(null);
+    //   setAdsFullUrl(null);
+    //   return;
+    // }
 
     // รูปแบบอื่นไม่รองรับ
-    setAdsLeftUrl(null);
-    setAdsRightUrl(null);
+    // setAdsLeftUrl(null);
+    // setAdsRightUrl(null);
     setAdsFullUrl(null);
   }, [setting]);
 
@@ -467,18 +467,19 @@ export default function DuoPage({ params }: { params: Promise<{ id: string }> })
       <Header setting={setting} />
       <main
         className={
-          adsLeftUrl
-            ? `${styles.mainContent} ${styles.mainContentWithAds}`
-            : adsRightUrl
-            ? `${styles.mainContent} ${styles.mainContentWithAdsRight}`
-            : styles.mainContent
+          // adsLeftUrl
+          //   ? `${styles.mainContent} ${styles.mainContentWithAds}`
+          //   : adsRightUrl
+          //   ? `${styles.mainContent} ${styles.mainContentWithAdsRight}`
+          //   : 
+          styles.mainContent
         }
       >
-        {adsLeftUrl && (
+        {/* {adsLeftUrl && (
           <div className={styles.adsLeft}>
             <img src={adsLeftUrl} alt="โฆษณา" className={styles.adsLeftImage} />
           </div>
-        )}
+        )} */}
         
         <div className={styles.column}>
           <InterviewTable setting={setting} visitData={visitDataLeft} />
@@ -489,11 +490,11 @@ export default function DuoPage({ params }: { params: Promise<{ id: string }> })
           <ServiceSection setting={setting} sortedActiveData={activeDataRight} tableNames={tableNamesRight} isRight={true} />
         </div>
         
-        {adsRightUrl && (
+        {/* {adsRightUrl && (
           <div className={styles.adsRight}>
             <img src={adsRightUrl} alt="โฆษณา" className={styles.adsRightImage} />
           </div>
-        )}
+        )} */}
       </main>
       {setting && <SkippedQueueBar skippedData={skippedData} setting={setting} />}
 

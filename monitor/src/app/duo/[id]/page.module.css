@@ -157,41 +157,39 @@
   grid-template-columns: 1fr 1fr 250px;
 }
 
-.adsLeft {
-  background: #ffffff;
-  border-radius: 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
+/* .adsLeft {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: center;
-  width: 250px;
-  height: 781px;
-}
-
-.adsLeftImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.adsRight {
-  background: #ffffff;
-  border-radius: 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  background: #f8fafc;
+  border-radius: 10px;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 250px;
-  height: 781px;
-}
+  width: 10vw;
+  min-height: 0;
+} */
 
-.adsRightImage {
+/* .adsLeftImage {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  object-fit: contain;
+  border-radius: 8px;
+} */
+
+/* .adsRight {
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 10vw;
+  min-height: 0;
+} */
+
+/* .adsRightImage {
+  width: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+} */
 
 .adsFullWrapper {
   grid-column: 1 / -1;
