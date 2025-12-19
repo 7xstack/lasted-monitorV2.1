@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use, useRef } from 'react';
+import { useEffect, useState, use, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import styles from './page.module.css';
@@ -216,12 +216,26 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
   const [adsFullUrl, setAdsFullUrl] = useState<string | null>(null);
   // แสดงโฆษณาแบบหน้าแยก (overlay) หลังหน่วงเวลา และแสดงค้าง 20 วิ
   const [showSplitAd, setShowSplitAd] = useState(false);
+  
+  // State สำหรับ Phase Management
+  const [isFading, setIsFading] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
+  const [isAdsMode, setIsAdsMode] = useState(false);
+  
   const isPausedRef = useRef(false);
   const currentSoundRef = useRef<Howl | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const er2TimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
 
   useNetworkError();
+  
+  // useMemo สำหรับ settingStable เพื่อป้องกัน unnecessary re-run
+  const settingStable = useMemo(() => setting, [
+    setting,
+  ]);
   
   // Setup audio unlock listeners
   useEffect(() => {
@@ -372,9 +386,91 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
     }
   }, [setting]);
 
-  // WebSocket connection - รอ audio unlock ก่อน
+  // WebSocket connection - รอ audio unlock และ setting ก่อน
   useEffect(() => {
-    if (!id || !audioUnlocked) return;
+    if (!id || !audioUnlocked || !settingStable) return;
+
+    // Local variable สำหรับ Phase Tracking
+    let currentPhase: 'er' | 'er_2' | 'ads' = 'er';
+
+    // Function สำหรับเริ่ม Transition
+    const startTransition = (direction: 'left' | 'right') => {
+      setSlideDirection(direction);
+      setIsTransitioning(true);
+      setIsFading(true);
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setIsFading(false);
+      }, 1200); // ต้องตรงกับ duration ใน CSS
+    };
+
+    // Function สำหรับส่ง Registration Message
+    const sendRegistration = (queryType: 'er' | 'er_2') => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        // กำหนดทิศทาง animation
+        if (queryType === 'er_2') {
+          startTransition('left');
+        } else {
+          startTransition('right');
+        }
+
+        wsRef.current.send(JSON.stringify({
+          type: 'register',
+          id: id,
+          query_type: queryType
+        }));
+        console.log(`[ER Switch] Registered with query_type: ${queryType}`);
+      }
+    };
+
+    // Function สำหรับ Schedule การสลับ Phase
+    const scheduleNextRegistration = () => {
+      // 1. อ่าน time_wait จาก setting (default 20 วินาที, range 5-120)
+      const parsedTimeWait = settingStable?.time_wait ? parseInt(String(settingStable.time_wait)) : null;
+      const timeWait = (parsedTimeWait && parsedTimeWait >= 5 && parsedTimeWait <= 120) ? parsedTimeWait : 20;
+      
+      // 2. Clear timeout/interval เก่าก่อน
+      if (er2TimeoutRef.current) {
+        clearTimeout(er2TimeoutRef.current);
+        er2TimeoutRef.current = null;
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      
+      // 3. ตั้ง timeout สำหรับสลับ phase
+      er2TimeoutRef.current = setTimeout(() => {
+        // Logic การสลับ phase
+        if (adsFullUrl) {
+          // มีโฆษณาเต็มจอ: er -> er_2 -> er_ads -> er
+          if (currentPhase === 'er') {
+            currentPhase = 'er_2';
+            setIsAdsMode(false);
+            sendRegistration('er_2');
+          } else if (currentPhase === 'er_2') {
+            currentPhase = 'ads';
+            setIsAdsMode(true);
+            startTransition('left');
+            // ไม่ต้องส่ง register ใหม่
+          } else {
+            currentPhase = 'er';
+            setIsAdsMode(false);
+            startTransition('right');
+            sendRegistration('er');
+          }
+        } else {
+          // ไม่มีโฆษณา: er <-> er_2
+          currentPhase = currentPhase === 'er' ? 'er_2' : 'er';
+          setIsAdsMode(false);
+          sendRegistration(currentPhase);
+        }
+        
+        scheduleNextRegistration(); // วนลูปต่อไป
+      }, timeWait * 1000);
+      
+      console.log(`[ER Switch] Scheduled next registration in ${timeWait} seconds`);
+    };
 
     const wsUrl = `wss://monitor.aztecthstudio.com/ws/`;
     const ws = new WebSocket(wsUrl);
@@ -382,11 +478,10 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
 
     ws.onopen = () => {
       console.log('WebSocket connected');
-      ws.send(JSON.stringify({
-        type: 'register',
-        id: id,
-        query_type: 'er'
-      }));
+      currentPhase = 'er';
+      setIsAdsMode(false);
+      sendRegistration('er');
+      scheduleNextRegistration(); // เริ่มวงจรสลับ
     };
 
     ws.onmessage = async (event) => {
@@ -395,6 +490,8 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
       }
       try {
         const data = JSON.parse(event.data);
+        
+        // Update data อื่นๆ (wait, active, skip, count)
         if (data.wait && Array.isArray(data.wait)) {
           setVisitData(data.wait);
         }
@@ -407,28 +504,48 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
         if (data.count && typeof data.count === 'object') {
           setCountData(data.count);
         }
+        
         if (data.call) {
+          // 1. หยุดการ swap ทันที
+          if (er2TimeoutRef.current) {
+            clearTimeout(er2TimeoutRef.current);
+            er2TimeoutRef.current = null;
+          }
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
+          
+          // 2. เปลี่ยนไป er_2 ทันที (ถ้ายังไม่ใช่)
+          if (currentPhase !== 'er_2') {
+            currentPhase = 'er_2';
+            setIsAdsMode(false);
+            sendRegistration('er_2');
+          }
+          
+          // 3. Pause และแสดง popup
           isPausedRef.current = true;
           setCallData(data.call);
           setShowCallPopup(true);
           
+          // 4. เล่นเสียง (ถ้ามี)
           const hasVoice = data.call.voice && Array.isArray(data.call.voice) && data.call.voice.length > 0;
-
           if (hasVoice) {
             await playVoicePlaylist(data.call.voice, currentSoundRef);
-            // หลังจากเสียงพูดจบ รอ 2 วินาทีแล้วปิด popup
-            setTimeout(() => {
-              setShowCallPopup(false);
-              isPausedRef.current = false;
-            }, 2000);
-          } else {
-            // ถ้าไม่มีเสียง รอ 2 วินาทีแล้วปิด popup
-            setTimeout(() => {
-              setShowCallPopup(false);
-              isPausedRef.current = false;
-            }, 2000);
           }
-
+          
+          // 5. หลังจากเสียงจบ + 2 วินาที ปิด popup
+          setTimeout(() => {
+            setShowCallPopup(false);
+            isPausedRef.current = false;
+            
+            // 6. หน่วง 5 วินาที แล้วเริ่ม swap ใหม่
+            setTimeout(() => {
+              scheduleNextRegistration();
+            }, 5000);
+          }, 2000);
+          
+          // 7. Update call status
           if (data.call.vn) {
             await updateCallStatus(data.call.vn);
           }
@@ -447,10 +564,20 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
     };
     
     return () => {
-      ws.close();
-      wsRef.current = null;
+      if (er2TimeoutRef.current) {
+        clearTimeout(er2TimeoutRef.current);
+        er2TimeoutRef.current = null;
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [id, audioUnlocked]);
+  }, [id, audioUnlocked, settingStable, adsFullUrl]);
 
   if (error) {
     return (
@@ -468,11 +595,9 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
 
   const fontFamily = setting.font === 'sarabun' ? "'Sarabun', sans-serif" : "'LINESeed', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
-  return (
-    <div className={styles.container} style={{ fontFamily }}>
-      <AudioUnlockOverlay onUnlocked={() => setAudioUnlocked(true)} />
-      {showCallPopup && callData && setting && <CallPopup setting={setting} callData={callData} />}
-      
+  // Render Content Function
+  const renderContent = () => (
+    <>
       <Header setting={setting} />
       <main
         className={
@@ -517,11 +642,31 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
         )}
       </main>
       {setting && <SkippedQueueBar skippedData={skippedData} setting={setting} />}
+    </>
+  );
 
-      {/* Overlay โฆษณาแบบหน้าแยก (split) */}
+  return (
+    <div className={styles.container} style={{ fontFamily }}>
+      <AudioUnlockOverlay onUnlocked={() => setAudioUnlocked(true)} />
+      {showCallPopup && callData && setting && <CallPopup setting={setting} callData={callData} />}
+      
+      {/* จอหลัก (กำลังแสดง) */}
+      <div className={`${styles.contentWrapper} ${isTransitioning ? (slideDirection === 'left' ? styles.slideOutLeft : styles.slideOutRight) : ''}`}>
+        {renderContent()}
+      </div>
+      
+      {/* จอใหม่ (กำลังเข้ามา - แสดงเมื่อ isFading = true) */}
+      {isFading && (
+        <div className={`${styles.contentWrapper} ${slideDirection === 'left' ? styles.slideInFromRight : styles.slideInFromLeft}`}>
+          {renderContent()}
+        </div>
+      )}
+
+      {/* Overlay โฆษณาแบบหน้าแยก (split) - แสดงเมื่อ isAdsMode = true */}
       {(() => {
         const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');
-        if (!enableAds || setting.ads_type !== 'split' || !showSplitAd) return null;
+        // แสดงโฆษณาเมื่อ isAdsMode = true หรือ showSplitAd = true (backward compatibility)
+        if (!enableAds || setting.ads_type !== 'split' || (!isAdsMode && !showSplitAd)) return null;
         
         // ใช้ ads_path_left ถ้ามี ไม่เช่นนั้นใช้ ads (backward compatibility)
         const splitAdsUrl = setting.ads_path_left || setting.ads;

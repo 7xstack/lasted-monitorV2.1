@@ -168,6 +168,16 @@ body {
   transform: translateX(1.4em);
 }
 
+.switch input:disabled + .slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #ccc;
+}
+
+.switch input:disabled:checked + .slider {
+  background-color: #999;
+}
+
 /* From Uiverse.io by Praashoo7 */ 
 /* The switch - the box around the slider */
 .switchs {

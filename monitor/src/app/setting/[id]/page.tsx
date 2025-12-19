@@ -1166,20 +1166,66 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                       { key: 'arr_r', label: 'เรียงอันดับล่าสุด (ขวา)' },
                       { key: 'lock_position', label: 'ล็อคตำแหน่งห้อง (ซ้าย)' },
                       { key: 'lock_position_right', label: 'ล็อคตำแหน่งห้อง (ขวา)' },
-                    ].map((item) => (
-                      <div key={item.key} className="flex items-center space-x-3">
-                        <div className="switch">
-                          <input
-                            id={`toggle-${item.key}`}
-                            type="checkbox"
-                            checked={payload[item.key as keyof PayloadData] as boolean}
-                            onChange={(e) => setPayload(prev => ({ ...prev, [item.key]: e.target.checked }))}
-                          />
-                          <label className="slider" htmlFor={`toggle-${item.key}`}></label>
+                    ].map((item) => {
+                      // ตรวจสอบว่า checkbox ควร disabled หรือไม่
+                      let isDisabled = false;
+                      if (item.key === 'arr_l') {
+                        // ถ้า "ล็อคตำแหน่งห้อง (ซ้าย)" เปิดอยู่ → ไม่สามารถเปิด "เรียงอันดับล่าสุด (ซ้าย)" ได้
+                        isDisabled = payload.lock_position === true;
+                      } else if (item.key === 'arr_r') {
+                        // ถ้า "ล็อคตำแหน่งห้อง (ขวา)" เปิดอยู่ → ไม่สามารถเปิด "เรียงอันดับล่าสุด (ขวา)" ได้
+                        isDisabled = payload.lock_position_right === true;
+                      } else if (item.key === 'lock_position') {
+                        // ถ้า "เรียงอันดับล่าสุด (ซ้าย)" เปิดอยู่ → ไม่สามารถเปิด "ล็อคตำแหน่งห้อง (ซ้าย)" ได้
+                        isDisabled = payload.arr_l === true;
+                      } else if (item.key === 'lock_position_right') {
+                        // ถ้า "เรียงอันดับล่าสุด (ขวา)" เปิดอยู่ → ไม่สามารถเปิด "ล็อคตำแหน่งห้อง (ขวา)" ได้
+                        isDisabled = payload.arr_r === true;
+                      }
+
+                      return (
+                        <div key={item.key} className="flex items-center space-x-3">
+                          <div className="switch">
+                            <input
+                              id={`toggle-${item.key}`}
+                              type="checkbox"
+                              checked={payload[item.key as keyof PayloadData] as boolean}
+                              disabled={isDisabled}
+                              onChange={(e) => {
+                                const isChecked = e.target.checked;
+                                setPayload(prev => {
+                                  const updates: Partial<PayloadData> = { [item.key]: isChecked };
+                                  
+                                  // ถ้าเปิด "เรียงอันดับล่าสุด (ซ้าย)" → ปิด "ล็อคตำแหน่งห้อง (ซ้าย)" อัตโนมัติ
+                                  if (item.key === 'arr_l' && isChecked) {
+                                    updates.lock_position = false;
+                                  }
+                                  
+                                  // ถ้าเปิด "เรียงอันดับล่าสุด (ขวา)" → ปิด "ล็อคตำแหน่งห้อง (ขวา)" อัตโนมัติ
+                                  if (item.key === 'arr_r' && isChecked) {
+                                    updates.lock_position_right = false;
+                                  }
+                                  
+                                  // ถ้าเปิด "ล็อคตำแหน่งห้อง (ซ้าย)" → ปิด "เรียงอันดับล่าสุด (ซ้าย)" อัตโนมัติ
+                                  if (item.key === 'lock_position' && isChecked) {
+                                    updates.arr_l = false;
+                                  }
+                                  
+                                  // ถ้าเปิด "ล็อคตำแหน่งห้อง (ขวา)" → ปิด "เรียงอันดับล่าสุด (ขวา)" อัตโนมัติ
+                                  if (item.key === 'lock_position_right' && isChecked) {
+                                    updates.arr_r = false;
+                                  }
+                                  
+                                  return { ...prev, ...updates };
+                                });
+                              }}
+                            />
+                            <label className="slider" htmlFor={`toggle-${item.key}`}></label>
+                          </div>
+                          <span className={`text-sm ${isDisabled ? 'text-slate-400' : 'text-slate-700'}`}>{item.label}</span>
                         </div>
-                        <span className="text-sm text-slate-700">{item.label}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
