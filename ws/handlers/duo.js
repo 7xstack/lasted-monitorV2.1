@@ -1,0 +1,286 @@
+import {
+  connectDb,
+  sql,
+  getDepartmentLoad,
+  getStylePopup,
+  getDepartmentRoomLoad,
+  getSetting,
+} from "../db.js";
+import fetch from "node-fetch";
+
+// Helper function to find station_index by comparing patient station with setting station array
+function findStationIndex(patientStation, stationArray) {
+  if (!patientStation || !stationArray || stationArray.length === 0) {
+    return null;
+  }
+
+  const patientStationTrimmed = String(patientStation).trim();
+  
+  for (let i = 0; i < stationArray.length; i++) {
+    const settingStation = String(stationArray[i]).trim();
+    
+    // เทียบแบบตรง
+    if (patientStationTrimmed === settingStation) {
+      return i + 1; // +1 เพื่อให้ index เริ่มจาก 1 แทน 0
+    }
+    
+    // เทียบแบบที่มี "โต๊ะ" prefix
+    if (patientStationTrimmed === `โต๊ะ${settingStation}` || 
+        `โต๊ะ${patientStationTrimmed}` === settingStation) {
+      return i + 1; // +1 เพื่อให้ index เริ่มจาก 1 แทน 0
+    }
+    
+    // เทียบแบบไม่มี prefix ทั้งสองฝั่ง (normalize)
+    const patientNormalized = patientStationTrimmed.replace(/^โต๊ะ\s*/, '');
+    const settingNormalized = settingStation.replace(/^โต๊ะ\s*/, '');
+    if (patientNormalized === settingNormalized) {
+      return i + 1; // +1 เพื่อให้ index เริ่มจาก 1 แทน 0
+    }
+  }
+  
+  return null;
+}
+
+async function fetchDuoData(client, today) {
+  try {
+    const [departmentLoadLeftString, departmentLoadRightString, genderStyle, settings] =
+      await Promise.all([
+        getDepartmentLoad(client.setting_id),
+        getDepartmentRoomLoad(client.setting_id),
+        getStylePopup(client.setting_id),
+        getSetting(client.setting_id),
+      ]);
+
+    const visitDate = new Date(today);
+
+    const departmentsLeft = departmentLoadLeftString
+      ? departmentLoadLeftString.split(",").map((d) => d.trim())
+      : [];
+    const departmentsRight = departmentLoadRightString
+      ? departmentLoadRightString.split(",").map((d) => d.trim())
+      : [];
+
+    const allDepartments = [...departmentsLeft, ...departmentsRight];
+
+    if (allDepartments.length === 0) {
+      client.send(
+        JSON.stringify({
+          waitLeft: [],
+          waitRight: [],
+          activeLeft: [],
+          activeRight: [],
+          call: null,
+          skip: [],
+        })
+      );
+      return;
+    }
+
+    const pool = await connectDb();
+
+    const deptPlaceholdersLeft = departmentsLeft
+      .map((_, i) => `@deptL${i}`)
+      .join(",");
+    const deptPlaceholdersRight = departmentsRight
+      .map((_, i) => `@deptR${i}`)
+      .join(",");
+    const allDeptPlaceholders = allDepartments
+      .map((_, i) => `@deptAll${i}`)
+      .join(",");
+
+    const createRequest = (side) => {
+      const request = pool.request();
+      request.input("visit_date", sql.Date, visitDate);
+      if (side === "left" && departmentsLeft.length > 0) {
+        departmentsLeft.forEach((dept, i) =>
+          request.input(`deptL${i}`, sql.VarChar, dept)
+        );
+      } else if (side === "right" && departmentsRight.length > 0) {
+        departmentsRight.forEach((dept, i) =>
+          request.input(`deptR${i}`, sql.VarChar, dept)
+        );
+      } else if (side === "all" && allDepartments.length > 0) {
+        allDepartments.forEach((dept, i) =>
+          request.input(`deptAll${i}`, sql.VarChar, dept)
+        );
+      }
+      return request;
+    };
+
+    const baseQuery = `
+      SELECT
+          T1.*, T2.priority_rate, T2.Urgent_Level as urgent_level, T2.Color,
+          T2.Description as urgent_description, T2.notice_text as urgent_notice_text
+      FROM monitor_visit_info AS T1
+      INNER JOIN setting_urgent_level AS T2 ON T1.urgent_id = T2.ID`;
+
+    const waitQueryLeft =
+      departmentsLeft.length > 0
+        ? `${baseQuery} WHERE T1.code_dept_id IN (${deptPlaceholdersLeft}) AND T1.visit_date = @visit_date AND T1.status = N'รอ' ORDER BY T2.priority_rate DESC`
+        : null;
+    const waitQueryRight =
+      departmentsRight.length > 0
+        ? `${baseQuery} WHERE T1.code_dept_id IN (${deptPlaceholdersRight}) AND T1.visit_date = @visit_date AND T1.status = N'รอ' ORDER BY T2.priority_rate DESC`
+        : null;
+    const activeQueryLeft =
+      departmentsLeft.length > 0
+        ? `${baseQuery} WHERE T1.code_dept_id IN (${deptPlaceholdersLeft}) AND T1.visit_date = @visit_date AND T1.status = N'กำลัง' ORDER BY T2.priority_rate DESC, T1.time_call ASC`
+        : null;
+    const activeQueryRight =
+      departmentsRight.length > 0
+        ? `${baseQuery} WHERE T1.code_dept_id IN (${deptPlaceholdersRight}) AND T1.visit_date = @visit_date AND T1.status = N'กำลัง' ORDER BY T2.priority_rate DESC, T1.time_call ASC`
+        : null;
+
+    const callQuery =
+      allDepartments.length > 0
+        ? `SELECT TOP(1) T1.*, T2.Urgent_Level as urgent_level, T2.Description as urgent_description, T2.notice_text as urgent_notice_text, T3.pname as pname FROM monitor_visit_info AS T1 INNER JOIN setting_urgent_level AS T2 ON T1.urgent_id = T2.ID LEFT JOIN visit_info AS T3 ON T1.vn = T3.vn WHERE T1.visit_date = @visit_date AND T1.status_call = '1' AND T1.code_dept_id IN (${allDeptPlaceholders}) ORDER BY T2.priority_rate DESC, T1.time_call ASC`
+        : null;
+    const skipQuery =
+      allDepartments.length > 0
+        ? `SELECT * FROM monitor_visit_info WHERE visit_date = @visit_date AND status = N'ข้าม' AND code_dept_id IN (${allDeptPlaceholders})`
+        : null;
+
+    const promises = [
+      waitQueryLeft
+        ? createRequest("left").query(waitQueryLeft)
+        : Promise.resolve({ recordset: [] }),
+      waitQueryRight
+        ? createRequest("right").query(waitQueryRight)
+        : Promise.resolve({ recordset: [] }),
+      activeQueryLeft
+        ? createRequest("left").query(activeQueryLeft)
+        : Promise.resolve({ recordset: [] }),
+      activeQueryRight
+        ? createRequest("right").query(activeQueryRight)
+        : Promise.resolve({ recordset: [] }),
+      callQuery
+        ? createRequest("all").query(callQuery)
+        : Promise.resolve({ recordset: [] }),
+      skipQuery
+        ? createRequest("all").query(skipQuery)
+        : Promise.resolve({ recordset: [] }),
+    ];
+
+    const [
+      waitResultLeft,
+      waitResultRight,
+      activeResultLeft,
+      activeResultRight,
+      callResult,
+      skipResult,
+    ] = await Promise.all(promises);
+
+    const callData = callResult.recordset[0] || null;
+
+    if (callData) {
+      const deptId = String(callData.code_dept_id);
+      if (departmentsLeft.includes(deptId)) {
+        callData.side = "left";
+      } else if (departmentsRight.includes(deptId)) {
+        callData.side = "right";
+      }
+    }
+
+    // Parse station_l and station_r from settings
+    const stationArrayLeft = settings && settings.station_l 
+      ? settings.station_l.split(',').map(s => s.trim()).filter(s => s)
+      : [];
+    const stationArrayRight = settings && settings.station_r 
+      ? settings.station_r.split(',').map(s => s.trim()).filter(s => s)
+      : [];
+
+    // Add station_index to waitLeft patients only (use station_l)
+    if (waitResultLeft.recordset) {
+      waitResultLeft.recordset.forEach(patient => {
+        patient.station_index = findStationIndex(patient.station, stationArrayLeft);
+      });
+    }
+
+    // Add station_index to waitRight patients only (use station_r)
+    if (waitResultRight.recordset) {
+      waitResultRight.recordset.forEach(patient => {
+        patient.station_index = findStationIndex(patient.station, stationArrayRight);
+      });
+    }
+
+    if (callData && settings) {
+      try {
+        const apiEndpoint = "https://voice.aztecthstudio.com/visit-queue-files";
+        
+        let nameToSend = callData.name;
+        let surnameToSend = callData.surname;
+
+        if (settings.voice === '1') { // 1: คิว
+          nameToSend = '';
+          surnameToSend = '';
+        } else if (settings.voice === '2') { // 2: คิว ชื่อ
+          surnameToSend = '';
+        }
+        // if a_sound (3: คิว ชื่อ นามสกุล), send both name and surname as is
+
+        // แปลง pname เป็นตัวเลข
+        let pnameValue = null;
+        if (callData.pname) {
+          const pnameStr = String(callData.pname).trim();
+          if (pnameStr === 'นาย') {
+            pnameValue = "1";
+          } else if (pnameStr === 'นาง') {
+            pnameValue = "2";
+          } else if (pnameStr === 'น.ส.' || pnameStr === 'นส' || pnameStr === 'น.ส') {
+            pnameValue = "3";
+          } else if (pnameStr === 'ด.ช.' || pnameStr === 'ดช' || pnameStr === 'ด.ช') {
+            pnameValue = "4";
+          } else if (pnameStr === 'ด.ญ.' || pnameStr === 'ดญ' || pnameStr === 'ด.ญ') {
+            pnameValue = "5";
+          } else {
+            pnameValue = "6";
+          }
+        }
+
+        const payload = {
+          visit_queue_no: callData.visit_q_no,
+          style_voice: genderStyle,
+          description: settings.set_descrip ? callData.urgent_description : '',
+          name: nameToSend,
+          surname: surnameToSend,
+          station: callData.station,
+          notice_text: settings.set_notice ? callData.urgent_notice_text : '',
+          pname: pnameValue,
+        };
+        const apiResponse = await fetch(apiEndpoint, {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+        });
+        if (apiResponse.ok) {
+          const apiResponseData = await apiResponse.json();
+          // Extract the 'merged_file' and add it as 'voice' array
+          callData.voice = apiResponseData.merged_file ? [apiResponseData.merged_file] : [];
+        } else {
+          console.error(`API call failed with status: ${apiResponse.status}`);
+          callData.voice = [];
+        }
+      } catch (apiError) {
+        console.error("Error calling external API:", apiError);
+        callData.voice = [];
+      }
+    }
+
+    const responseData = {
+      waitLeft: waitResultLeft.recordset,
+      waitRight: waitResultRight.recordset,
+      activeLeft: activeResultLeft.recordset,
+      activeRight: activeResultRight.recordset,
+      call: callData,
+      skip: skipResult.recordset,
+    };
+
+    client.send(JSON.stringify(responseData));
+  } catch (error) {
+    console.error(
+      `Failed to fetch Duo data for setting_id ${client.setting_id}:`,
+      error
+    );
+    client.send(JSON.stringify({ error: "Failed to fetch Duo data" }));
+  }
+}
+
+export default fetchDuoData;

@@ -1,0 +1,4 @@
+node_modules
+audio
+.DS_Store
+.env

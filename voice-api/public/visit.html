@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>เข้าคิวด้วย visit_queue_no | โรงพยาบาล</title>
+	<style>
+		body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; margin: 0; background: #f7f7f8; color: #111; }
+		.container { max-width: 720px; margin: 48px auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 24px rgba(0,0,0,0.06); }
+		h1 { margin-top: 0; font-size: 22px; }
+		label { display: block; margin: 12px 0 6px; font-weight: 600; }
+		input[type="text"] { width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+		button { margin-top: 16px; background: #111; color: #fff; border: 0; border-radius: 8px; padding: 12px 16px; font-size: 16px; cursor: pointer; }
+		.error { color: #b00020; background: #fde7ea; border: 1px solid #f6b7c0; padding: 10px 12px; border-radius: 8px; margin-top: 12px; display: none; }
+		.links a { margin-right: 10px; }
+	</style>
+	<script>
+		function handleSubmit(event) {
+			event.preventDefault();
+			const vq = document.getElementById('vq').value.trim();
+			const style = document.querySelector('input[name="style_voice"]:checked')?.value || '1';
+			const descriptionVal = document.getElementById('description')?.value?.trim() || '';
+			const nameVal = document.getElementById('name')?.value?.trim() || '';
+			const pnameVal = document.getElementById('pname')?.value?.trim() || '';
+			const surnameVal = document.getElementById('surname')?.value?.trim() || '';
+			const stationVal = document.getElementById('station')?.value?.trim() || '';
+			const noticeVal = document.getElementById('notice_text')?.value?.trim() || '';
+			const errBox = document.getElementById('errorBox');
+			errBox.style.display = 'none';
+			errBox.textContent = '';
+			if (!vq) {
+				errBox.textContent = 'กรุณากรอก visit_queue_no';
+				errBox.style.display = 'block';
+				return;
+			}
+			// ระบบใหม่: ฝั่งเซิร์ฟเวอร์จะ merge ให้เสมอ
+			const payload = {
+				visit_queue_no: vq,
+				style_voice: Number(style),
+				description: descriptionVal || undefined,
+				// ปล่อยชื่อไปตรง ๆ ให้ฝั่งเซิร์ฟเวอร์เติมคำนำหน้าตาม pname
+				name: nameVal || undefined,
+				pname: pnameVal ? Number(pnameVal) : undefined,
+				surname: surnameVal || undefined,
+				station: stationVal || undefined,
+				notice_text: noticeVal || undefined
+			};
+			fetch('/visit-queue-files', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			}).then(async (r) => {
+				if (!r.ok) {
+					const data = await r.json().catch(()=>({}));
+					throw new Error(data?.error || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}).then(data => {
+				if (data?.merged_file) {
+					window.location.href = `/player?file=${encodeURIComponent(data.merged_file)}`;
+				} else {
+					throw new Error('ไม่ได้รับพาธ merged_file จากเซิร์ฟเวอร์');
+				}
+			}).catch(err => {
+				errBox.textContent = `ผิดพลาด: ${err.message || err}`;
+				errBox.style.display = 'block';
+			});
+		}
+	</script>
+</head>
+<body>
+	<div class="container">
+		<h1>เล่นเสียงจากคิว (visit_queue_no)</h1>
+		<form onsubmit="handleSubmit(event)">
+			<label for="vq">visit_queue_no</label>
+			<input id="vq" type="text" placeholder="เช่น A001" autofocus />
+			<label>รูปแบบเสียง (style_voice)</label>
+			<div>
+				<label><input type="radio" name="style_voice" value="1" checked /> ผู้ชาย</label>
+				<label style="margin-left:16px;"><input type="radio" name="style_voice" value="2" /> ผู้หญิง</label>
+			</div>
+			<label for="description">คำอธิบาย/นำหน้า (จะเล่นก่อนชื่อ ถ้ามี)</label>
+			<input id="description" type="text" placeholder="เช่น คุณ" />
+			<label for="name">ชื่อ (ถ้ามีจะสร้าง/ใช้ไฟล์แคชอัตโนมัติ)</label>
+			<input id="name" type="text" placeholder="เช่น สมพงษ์" />
+			<label for="pname">คำนำหน้าชื่อ (1=นาย, 2=นาง, 3=นางสาว, 4=เด็กชาย, 5=เด็กหญิง, ว่าง=คุณ)</label>
+			<input id="pname" type="number" min="1" max="5" placeholder="เช่น 1" />
+			<label for="surname">นามสกุล (จะต่อหลังชื่อ ถ้ามี)</label>
+			<input id="surname" type="text" placeholder="เช่น ใจดี" />
+			<label for="station">สถานี/จุดบริการ (ถ้ามีจะพูดนำหน้าด้วยคำว่า “ที่”)</label>
+			<input id="station" type="text" placeholder="เช่น ห้องตรวจ 1" />
+			<label for="notice_text">ข้อความแจ้งเตือน/ปิดท้าย (จะเล่นท้ายสุด ถ้ามี)</label>
+			<input id="notice_text" type="text" placeholder="เช่น กรุณารอเรียกคิวถัดไป" />
+			<button type="submit">ไปหน้าฟังเสียง</button>
+			<div id="errorBox" class="error"></div>
+		</form>
+		<p class="links">
+			<a href="/">← กลับหน้า TTS</a>
+			<a href="/audio">ดูรายการไฟล์</a>
+		</p>
+	</div>
+</body>
+</html>
+
+

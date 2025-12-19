@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test Client</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; padding: 20px; max-width: 800px; margin: 0 auto; background-color: #f7f7f7; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        .controls { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        label { font-weight: bold; }
+        input, select, button { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #response { background-color: #282c34; color: #abb2bf; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-family: "Courier New", Courier, monospace; min-height: 100px; }
+        #status { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Test Client</h1>
+        <p>Start your server (`node websocket-server.js`), then enter the test parameters below and click Connect.</p>
+        
+        <div class="controls">
+            <label for="settingId">Setting ID:</label>
+            <input type="number" id="settingId" value="1">
+            
+            <label for="queryType">Query Type:</label>
+            <select id="queryType">
+                <option value="single" selected>Single</option>
+                <option value="er">ER</option>
+                <option value="duo">Duo</option>
+            </select>
+            
+            <button id="connectBtn">Connect & Test</button>
+        </div>
+
+        <h2>Live Response from Server:</h2>
+        <pre id="response">(Not connected)</pre>
+        <p id="status">Status: Disconnected</p>
+    </div>
+
+    <script>
+        const settingIdInput = document.getElementById('settingId');
+        const queryTypeSelect = document.getElementById('queryType');
+        const connectBtn = document.getElementById('connectBtn');
+        const responseEl = document.getElementById('response');
+        const statusEl = document.getElementById('status');
+        let ws;
+
+        connectBtn.addEventListener('click', () => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+
+            responseEl.textContent = 'Connecting...';
+            statusEl.textContent = 'Status: Connecting...';
+            
+            ws = new WebSocket('ws://localhost:1100');
+
+            ws.onopen = () => {
+                console.log('Connected to WebSocket server.');
+                statusEl.textContent = 'Status: Connected';
+                
+                const registrationMessage = {
+                    type: 'register',
+                    id: parseInt(settingIdInput.value, 10),
+                    query_type: queryTypeSelect.value
+                };
+
+                console.log('Sending registration message:', registrationMessage);
+                responseEl.textContent = 'Connection open. Sent registration message. Waiting for data...';
+                ws.send(JSON.stringify(registrationMessage));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Message from server: ', data);
+                // Pretty-print the JSON object
+                responseEl.textContent = JSON.stringify(data, null, 2);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from WebSocket server.');
+                statusEl.textContent = 'Status: Disconnected';
+                responseEl.textContent += '\n\n--- Connection Closed ---';
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error: ', error);
+                statusEl.textContent = 'Status: Error';
+                responseEl.textContent = 'An error occurred. Check the browser console (F12) for details.';
+            };
+        });
+    </script>
+</body>
+</html>

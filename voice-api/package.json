@@ -1,0 +1,21 @@
+{
+  "name": "โรงพยาบาล",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Node.js starter for โรงพยาบาล",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^5.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED"
+}
