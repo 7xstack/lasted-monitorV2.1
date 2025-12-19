@@ -7,6 +7,7 @@ import {
   getSetting,
 } from "../db.js";
 import fetch from "node-fetch";
+import { info, error, warn, debug } from "../logger.js";
 
 // Helper function to find station_index by comparing patient station with setting station array
 function findStationIndex(patientStation, stationArray) {
@@ -43,6 +44,8 @@ function findStationIndex(patientStation, stationArray) {
 
 async function fetchDuoData(client, today) {
   try {
+    info(`[DUO] เริ่มดึงข้อมูลสำหรับ setting_id: ${client.setting_id}, date: ${today}`);
+    
     const [departmentLoadLeftString, departmentLoadRightString, genderStyle, settings] =
       await Promise.all([
         getDepartmentLoad(client.setting_id),
@@ -50,6 +53,8 @@ async function fetchDuoData(client, today) {
         getStylePopup(client.setting_id),
         getSetting(client.setting_id),
       ]);
+
+    info(`[DUO] ดึง settings สำเร็จ - dept_left: ${departmentLoadLeftString}, dept_right: ${departmentLoadRightString}, style_voice: ${genderStyle}, voice: ${settings?.voice}`);
 
     const visitDate = new Date(today);
 
@@ -63,6 +68,7 @@ async function fetchDuoData(client, today) {
     const allDepartments = [...departmentsLeft, ...departmentsRight];
 
     if (allDepartments.length === 0) {
+      warn(`[DUO] ไม่มี departments สำหรับ setting_id ${client.setting_id}`);
       client.send(
         JSON.stringify({
           waitLeft: [],
@@ -172,12 +178,16 @@ async function fetchDuoData(client, today) {
 
     const callData = callResult.recordset[0] || null;
 
+    info(`[DUO] ผลลัพธ์จาก DB - waitLeft: ${waitResultLeft.recordset.length}, waitRight: ${waitResultRight.recordset.length}, activeLeft: ${activeResultLeft.recordset.length}, activeRight: ${activeResultRight.recordset.length}, call: ${callData ? 'มี' : 'ไม่มี'}, skip: ${skipResult.recordset.length}`);
+
     if (callData) {
       const deptId = String(callData.code_dept_id);
       if (departmentsLeft.includes(deptId)) {
         callData.side = "left";
+        info(`[DUO] Call data อยู่ฝั่ง left (dept: ${deptId})`);
       } else if (departmentsRight.includes(deptId)) {
         callData.side = "right";
+        info(`[DUO] Call data อยู่ฝั่ง right (dept: ${deptId})`);
       }
     }
 
@@ -207,14 +217,20 @@ async function fetchDuoData(client, today) {
       try {
         const apiEndpoint = "https://voice.aztecthstudio.com/visit-queue-files";
         
+        info(`[DUO] 🎤 กำลังส่งข้อมูลไปยัง voice.aztecthstudio.com สำหรับ visit_q_no: ${callData.visit_q_no}, side: ${callData.side || 'unknown'}`);
+        
         let nameToSend = callData.name;
         let surnameToSend = callData.surname;
 
         if (settings.voice === '1') { // 1: คิว
           nameToSend = '';
           surnameToSend = '';
+          info(`[DUO] Voice mode: 1 (คิวเท่านั้น)`);
         } else if (settings.voice === '2') { // 2: คิว ชื่อ
           surnameToSend = '';
+          info(`[DUO] Voice mode: 2 (คิว + ชื่อ)`);
+        } else {
+          info(`[DUO] Voice mode: 3 (คิว + ชื่อ + นามสกุล)`);
         }
         // if a_sound (3: คิว ชื่อ นามสกุล), send both name and surname as is
 
@@ -247,20 +263,36 @@ async function fetchDuoData(client, today) {
           notice_text: settings.set_notice ? callData.urgent_notice_text : '',
           pname: pnameValue,
         };
+
+        info(`[DUO] 📤 Payload ที่ส่งไป voice API:`, payload);
+
         const apiResponse = await fetch(apiEndpoint, {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
         });
+
+        info(`[DUO] 📥 Response status จาก voice API: ${apiResponse.status} ${apiResponse.statusText}`);
+
         if (apiResponse.ok) {
           const apiResponseData = await apiResponse.json();
+          info(`[DUO] ✅ Response จาก voice API:`, apiResponseData);
           // Extract the 'merged_file' and add it as 'voice' array
           callData.voice = apiResponseData.merged_file ? [apiResponseData.merged_file] : [];
+          info(`[DUO] 🎵 Voice file ที่ได้: ${callData.voice.length > 0 ? callData.voice[0] : 'ไม่มี'}`);
         } else {
-          console.error(`API call failed with status: ${apiResponse.status}`);
+          const errorText = await apiResponse.text();
+          error(`[DUO] ❌ API call failed - status: ${apiResponse.status}, response: ${errorText}`);
           callData.voice = [];
         }
       } catch (apiError) {
-        console.error("Error calling external API:", apiError);
+        error(`[DUO] ❌ Error calling voice API:`, apiError);
         callData.voice = [];
+      }
+    } else {
+      if (!callData) {
+        debug(`[DUO] ไม่มี callData สำหรับส่งไป voice API`);
+      }
+      if (!settings) {
+        warn(`[DUO] ไม่มี settings สำหรับส่งไป voice API`);
       }
     }
 
@@ -273,12 +305,22 @@ async function fetchDuoData(client, today) {
       skip: skipResult.recordset,
     };
 
+    // เปรียบเทียบกับ response ก่อนหน้า
+    const responseString = JSON.stringify(responseData);
+    const previousResponse = client.previousResponseData;
+    
+    if (previousResponse === responseString) {
+      // ข้อมูลเหมือนเดิม ไม่ต้อง log
+      debug(`[DUO] ข้อมูลเหมือนเดิม ไม่ log`);
+    } else {
+      // ข้อมูลเปลี่ยน log และอัปเดต previous response
+      info(`[DUO] ✅ ส่งข้อมูลกลับไปยัง client สำเร็จ - waitLeft: ${responseData.waitLeft.length}, waitRight: ${responseData.waitRight.length}, activeLeft: ${responseData.activeLeft.length}, activeRight: ${responseData.activeRight.length}, call: ${responseData.call ? 'มี' : 'ไม่มี'}`);
+      client.previousResponseData = responseString;
+    }
+    
     client.send(JSON.stringify(responseData));
-  } catch (error) {
-    console.error(
-      `Failed to fetch Duo data for setting_id ${client.setting_id}:`,
-      error
-    );
+  } catch (err) {
+    error(`[DUO] ❌ Failed to fetch Duo data for setting_id ${client.setting_id}:`, err);
     client.send(JSON.stringify({ error: "Failed to fetch Duo data" }));
   }
 }

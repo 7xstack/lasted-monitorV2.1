@@ -20,3 +20,13 @@
 2025-12-19 13:00:15.834 [INFO ] Log viewer disconnected {"service":"websocket-server"}
 2025-12-19 13:00:15.916 [INFO ] Client connected {"service":"websocket-server"}
 2025-12-19 13:00:15.930 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 13:08:49.387 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 13:08:49.454 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 13:08:52.999 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 13:08:53.082 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 13:08:53.094 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 13:09:04.623 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 13:09:04.766 [INFO ] Client connected {"service":"websocket-server"}
+2025-12-19 13:09:04.794 [INFO ] Log viewer connected {"service":"websocket-server"}
+2025-12-19 13:11:58.458 [INFO ] Log viewer disconnected {"service":"websocket-server"}
+2025-12-19 13:13:11.525 [INFO ] Log viewer disconnected {"service":"websocket-server"}

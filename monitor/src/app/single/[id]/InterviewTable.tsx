@@ -89,14 +89,54 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
           return priorityB - priorityA; // DESC: สูงสุดก่อน
         }
         
-        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม time_call DESC (ใหม่สุดก่อน)
-        const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
-        const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
+        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม check_in DESC (ใหม่สุดก่อน)
+        // ใช้ check_in เป็นหลัก ถ้าไม่มีใช้ time_call
+        let checkInTimeA = 0;
+        let checkInTimeB = 0;
         
-        const timeA = timeCallA ? new Date(timeCallA).getTime() : 0;
-        const timeB = timeCallB ? new Date(timeCallB).getTime() : 0;
+        // ลองใช้ check_in ก่อน
+        if (a.check_in) {
+          const checkInA = typeof a.check_in === 'string' ? a.check_in : null;
+          if (checkInA) {
+            const parsedDateA = new Date(checkInA);
+            if (!isNaN(parsedDateA.getTime())) {
+              checkInTimeA = parsedDateA.getTime();
+            }
+          }
+        }
         
-        return timeB - timeA; // DESC: ใหม่สุดก่อน
+        if (b.check_in) {
+          const checkInB = typeof b.check_in === 'string' ? b.check_in : null;
+          if (checkInB) {
+            const parsedDateB = new Date(checkInB);
+            if (!isNaN(parsedDateB.getTime())) {
+              checkInTimeB = parsedDateB.getTime();
+            }
+          }
+        }
+        
+        // ถ้าไม่มี check_in ให้ใช้ time_call
+        if (checkInTimeA === 0 && a.time_call) {
+          const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
+          if (timeCallA) {
+            const parsedDateA = new Date(timeCallA);
+            if (!isNaN(parsedDateA.getTime())) {
+              checkInTimeA = parsedDateA.getTime();
+            }
+          }
+        }
+        
+        if (checkInTimeB === 0 && b.time_call) {
+          const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
+          if (timeCallB) {
+            const parsedDateB = new Date(timeCallB);
+            if (!isNaN(parsedDateB.getTime())) {
+              checkInTimeB = parsedDateB.getTime();
+            }
+          }
+        }
+        
+        return checkInTimeB - checkInTimeA; // DESC: ใหม่สุดก่อน
       })
     : visitData;
   
