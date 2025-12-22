@@ -1,0 +1,155 @@
+2025-11-12T20:06:54.957Z [single] error:fetchSetting The user aborted a request.
+2025-11-12T20:06:52.537Z [single] fetchWithErrorHandling:rethrow /api/setting/1 The user aborted a request.
+2025-11-12T20:25:14.919Z [single] fetchVisitData:start dept=2 date=2025-11-13
+2025-11-12T20:25:14.923Z [single] fetchActiveData:start dept=2 force=false
+2025-11-12T20:25:14.926Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:25:14.932Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:25:22.553Z [single] fetchVisitData:updated count=15
+2025-11-12T20:25:24.927Z [single] fetchWithErrorHandling:timeout /api/data/call
+2025-11-12T20:25:24.930Z [single] fetchCallData:response success=undefined hasCall=undefined status=undefined
+2025-11-12T20:25:24.934Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:25:29.940Z [single] fetchVisitData:start dept=2 date=2025-11-13
+2025-11-12T20:25:29.945Z [single] fetchActiveData:start dept=2 force=false
+2025-11-12T20:25:29.949Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:25:29.952Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:25:34.835Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:25:34.837Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:25:39.952Z [single] fetchWithErrorHandling:timeout /api/data/call
+2025-11-12T20:25:39.953Z [single] fetchCallData:response success=undefined hasCall=undefined status=undefined
+2025-11-12T20:25:39.960Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:25:44.839Z [single] fetchWithErrorHandling:timeout /api/data/call
+2025-11-12T20:25:44.840Z [single] fetchCallData:response success=undefined hasCall=undefined status=undefined
+2025-11-12T20:25:44.850Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:25:53.712Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:25:53.716Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:25:58.285Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:26:03.744Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:26:03.745Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:26:07.289Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:26:13.807Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:26:13.808Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:26:18.912Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:26:23.745Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:26:23.746Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:26:26.786Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:26:33.751Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:26:33.753Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:26:36.173Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:26:43.769Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:26:43.771Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:26:47.457Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:26:53.775Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:26:53.772Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:26:57.352Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:27:03.766Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:27:03.770Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:27:06.551Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:27:13.761Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:27:13.764Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:27:17.065Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:27:23.758Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:27:23.763Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:27:25.841Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:27:33.777Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:27:33.779Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:27:36.020Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:27:43.768Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:27:43.770Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:27:50.388Z [single] fetchCallData:response success=true hasCall=true status=1
+2025-11-12T20:27:50.391Z [single] playTTS:start queue=ก001 voice=th-TH-Neural2-A candidates=4
+2025-11-12T20:27:50.389Z [single] fetchCallData:new call ก001
+2025-11-12T20:27:50.845Z [single] popup shown for ก001
+2025-11-12T20:27:54.240Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:27:54.238Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:27:58.021Z [single] fetchCallData:response success=true hasCall=true status=1
+2025-11-12T20:27:58.022Z [single] fetchCallData:duplicate call ก001
+2025-11-12T20:27:58.437Z [single] browserTTS:complete ก001
+2025-11-12T20:28:03.065Z [single] updateCallStatus:success vn=680906222229
+2025-11-12T20:28:03.070Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:28:03.821Z [single] fetchActiveData:start dept=2 force=true
+2025-11-12T20:28:05.473Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:28:05.582Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:28:05.902Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:28:06.032Z [single] fetchActiveData:updated count=0
+2025-11-12T20:28:11.216Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:28:14.300Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:28:14.303Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:28:20.565Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:28:23.832Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:28:23.866Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:28:25.416Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:28:33.830Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:28:33.824Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:28:35.506Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:28:43.951Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:28:44.013Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:28:47.212Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:28:53.846Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:28:53.859Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:28:57.021Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:29:03.866Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:29:03.950Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:29:10.990Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:29:13.839Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:29:13.875Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:29:15.866Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:29:23.845Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:29:23.847Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:29:27.984Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:29:33.965Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:29:33.998Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:29:37.518Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:29:46.530Z [single] fetchVisitData:start dept=2 date=2025-11-13
+2025-11-12T20:29:46.534Z [single] fetchActiveData:start dept=2 force=false
+2025-11-12T20:29:46.538Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:29:46.542Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:29:52.366Z [single] fetchVisitData:updated count=15
+2025-11-12T20:29:55.471Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:29:55.474Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:29:55.630Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:30:00.635Z [single] fetchVisitData:start dept=2 date=2025-11-13
+2025-11-12T20:30:00.638Z [single] fetchActiveData:start dept=2 force=false
+2025-11-12T20:30:00.641Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:30:00.644Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:30:05.134Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:30:05.475Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:30:05.636Z [single] fetchVisitData:start dept=2 date=2025-11-13
+2025-11-12T20:30:05.642Z [single] fetchActiveData:start dept=2 force=false
+2025-11-12T20:30:05.649Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:30:05.654Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:30:10.634Z [single] fetchVisitData:start dept=2 date=2025-11-13
+2025-11-12T20:30:10.647Z [single] fetchActiveData:start dept=2 force=false
+2025-11-12T20:30:10.651Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:30:10.656Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:30:10.665Z [single] fetchWithErrorHandling:timeout /api/data
+2025-11-12T20:30:10.669Z [single] fetchWithErrorHandling:timeout /api/data/active
+2025-11-12T20:30:10.679Z [single] fetchWithErrorHandling:timeout /api/data/call
+2025-11-12T20:30:15.168Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:30:10.683Z [single] fetchCallData:response success=undefined hasCall=undefined status=undefined
+2025-11-12T20:30:10.693Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:30:15.175Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:30:15.640Z [single] fetchWithErrorHandling:timeout /api/data
+2025-11-12T20:30:15.648Z [single] fetchWithErrorHandling:timeout /api/data/active
+2025-11-12T20:30:15.652Z [single] fetchWithErrorHandling:timeout /api/data/call
+2025-11-12T20:30:15.654Z [single] fetchCallData:response success=undefined hasCall=undefined status=undefined
+2025-11-12T20:30:15.662Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:30:20.637Z [single] fetchWithErrorHandling:timeout /api/data
+2025-11-12T20:30:20.656Z [single] fetchWithErrorHandling:timeout /api/data/active
+2025-11-12T20:30:20.663Z [single] fetchWithErrorHandling:timeout /api/data/call
+2025-11-12T20:30:20.668Z [single] fetchCallData:response success=undefined hasCall=undefined status=undefined
+2025-11-12T20:30:20.676Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:30:25.174Z [single] fetchWithErrorHandling:timeout /api/data/call
+2025-11-12T20:30:25.176Z [single] fetchCallData:response success=undefined hasCall=undefined status=undefined
+2025-11-12T20:30:25.185Z [single] fetchWithErrorHandling:timeout /api/data/skipped
+2025-11-12T20:31:02.390Z [single] fetchVisitData:start dept=2 date=2025-11-13
+2025-11-12T20:31:02.394Z [single] fetchActiveData:start dept=2 force=false
+2025-11-12T20:31:02.428Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:31:02.496Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:31:05.434Z [single] fetchVisitData:updated count=15
+2025-11-12T20:31:05.551Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:31:08.480Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:31:08.552Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:31:09.782Z [single] fetchCallData:response success=true hasCall=false status=undefined
+2025-11-12T20:31:10.358Z [single] fetchCallData:start dept=2 date=2025-11-13
+2025-11-12T20:31:10.364Z [single] fetchSkippedData:start dept=2
+2025-11-12T20:31:11.195Z [single] fetchCallData:response success=true hasCall=false status=undefined

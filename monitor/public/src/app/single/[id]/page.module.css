@@ -1,0 +1,986 @@
+/* Container */
+.container {
+  min-height: 100vh;
+  background: #dff4f7;
+  padding: 15px;
+  position: relative;
+}
+
+/* Transition Overlay - สีฟ้า fade in/out */
+.transitionOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+  background: linear-gradient(135deg, #043566, #065a9e);
+}
+
+/* Header Styles */
+.header {
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.144);
+  border-radius: 10px;
+
+  background: white;
+
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.hospitalIcon {
+  width: 32px;
+  height: 32px;
+  background: #4682B4;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.hospitalName {
+  color: #0c266d;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.checkupButton {
+  background: white;
+  color: #1e3a8a;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Main Content */
+.mainContent {
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+  margin-top: 0.5rem;
+  gap: 0.5rem;
+  /* padding: 2rem; */
+  padding-top: 0.5rem;
+  padding-right: 0.5rem;
+  min-height: calc(100vh - 120px);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.307);
+}
+
+/* Ads Container */
+.adsContainer {
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  /* padding: 1rem; */
+  background: #f8fafc;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 1;
+  width: 10vw;
+  min-height: 0;
+}
+
+.adsImage {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Split Ads Overlay */
+.adsOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.adsOverlayContent {
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adsOverlayImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+/* Left Column - Interview Point */
+.interviewSection {
+  background: transparent;
+  max-height: 100vh;
+  border-radius: 10px;
+  padding: 1.5rem;
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.307); */
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+}
+/* Middle Column - Active Patients */
+.activeSection {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.307);
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  color: #1e3a8a;
+  font-weight: bold;
+  font-size: 1.5rem;
+  text-align: start;
+}
+
+.realtimeIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #059669;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #ecfdf5;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid #10b981;
+}
+
+.realtimeDot {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.interviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.tableHeader {
+  background: #f3f4f6;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  /* border-radius: 8px; */
+  text-align: left;
+  border: none;
+}
+
+.headerItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.headerIcon {
+  color: #6b7280;
+}
+
+.personIcon {
+  color: #6b7280;
+}
+
+.noData {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1.1rem;
+  padding: 3rem 0;
+  border: none;
+}
+
+.tableRow {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+
+.tableCell {
+  padding: 1.5rem;
+  text-align: left;
+  color: #0c266d;
+  font-size: 1.2rem;
+  border: none;
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+.queueNumberContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.queueNumberLeft {
+  font-size: 1.8rem;
+  color: #1e3a8a;
+  font-weight: 800;
+  font-family: var(--font-rubik);
+}
+
+.patientName {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Urgent Level Styles */
+.urgentLevel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.urgentColorBlock {
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.urgentBlock {
+  display: inline-block;
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.urgentCircle {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.urgentText {
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.noUrgentLevel {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Checkbox Style for No Urgent Level */
+.urgentCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.checkboxBlock {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid #e5e7eb;
+  background-color: #0066AA;
+  transition: all 0.2s ease;
+}
+
+.checkboxBlock:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Right Column - Currently Receiving Service */
+.serviceSection {
+  background: rgb(6, 74, 142);
+  background: linear-gradient(153deg,
+      rgba(40, 199, 231, 1) 0%,
+      rgba(0, 27, 122, 1) 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  flex: 0.5;
+  min-width: 0;
+}
+
+
+
+.serviceTitle {
+  color: white;
+  font-weight: bold;
+  font-size: 2rem;
+  margin-bottom: 10px;
+  text-align: start;
+}
+
+.serviceCards {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  gap: 0.3rem;
+  align-items: stretch;
+}
+
+.serviceCard {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.454);
+  transition: transform 0.2s ease;
+  height: 100%;
+}
+
+
+.serviceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.serviceText {
+  color: #1e3a8a;
+  font-weight: bold;
+  font-size: 1.5rem;
+  text-align: start;
+}
+
+.patientInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 3px solid #3b82f6;
+}
+
+
+
+.patientName {
+  color: #1e3a8a;
+  font-weight: 600;
+  font-size: 1.8rem;
+}
+
+.actionBox {
+  width: 120px;
+  height: 80px;
+  background: #ffffff;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.372);
+}
+
+.queueNumberSplit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 20px;
+}
+
+.queueLetter {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 2.5rem;
+  line-height: 1;
+  font-family: var(--font-rubik);
+}
+
+/* Lock Position Styles */
+.lockPositionContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  gap: 0.3rem;
+  align-items: stretch;
+}
+
+.lockPositionItem {
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.454);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease;
+  height: 135.2px;
+  min-height: 80px;
+  overflow: hidden;
+  background: white;
+}
+
+.lockPositionItemTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #1e3a8a;
+  min-width: 150px;
+}
+
+.lockPositionQueuesContainer {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+  flex: 1;
+}
+
+.lockPositionContent {
+  width: 130px;
+  height: 80px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 0.6rem;
+  box-shadow: 2px 4px 4px rgba(0, 0, 0, 0.372);
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.queueNumber {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 2.2rem;
+  line-height: 1;
+  font-family: var(--font-rubik);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .mainContent {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+  
+  .header {
+    padding: 1rem;
+  }
+  
+  .headerName {
+    font-size: 1rem;
+  }
+  
+  .checkupButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .headerLeft {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .checkupButton {
+    width: 100%;
+  }
+  
+  .mainContent {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .sectionTitle,
+  .serviceTitle {
+    font-size: 1.3rem;
+  }
+  
+  .serviceCard {
+    padding: 0.75rem 1rem;
+  }
+  
+  .serviceText {
+    font-size: 1rem;
+  }
+  
+  .patientName {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.75rem;
+  }
+  
+  .headerLeft {
+    padding: 0.5rem;
+  }
+  
+  .hospitalName {
+    font-size: 1rem;
+  }
+  
+  .mainContent {
+    padding: 0.75rem;
+  }
+  
+  .interviewSection,
+  .serviceSection {
+    padding: 1rem;
+  }
+  
+  .tableHeader {
+    padding: 0.75rem;
+  }
+  
+  .serviceCards {
+    gap: 0.75rem;
+  }
+  
+  .patientName {
+    font-size: 1.2rem;
+  }
+}
+
+/* Call Popup Styles */
+.callPopup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.callPopupContent {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  text-align: left;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideIn 0.3s ease-out;
+}
+
+.callHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.callHeader h3 {
+  color: #dc2626;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.queueIndicator {
+  background: #f59e0b;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+
+
+.callInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.callDataLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.callTableName {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1e3a8a;
+  margin: 0;
+}
+.serviceInfoContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+.callPatientName {
+  font-size: 2rem;
+  color: #1e3a8a;
+  font-weight: 600;
+  margin: 0;
+}
+
+.callQueueBox {
+  background: #1e3a8a;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+  min-width: 120px;
+}
+
+.callQueueNumber {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: white;
+  font-family: var(--font-rubik);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  line-height: 1;
+}
+
+
+
+
+
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Skipped Queue Bar Styles */
+.skippedBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #064a8e;
+  color: white;
+  z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.5s ease-out;
+}
+
+.skippedBarContent {
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 100vw;
+  overflow: hidden;
+}
+
+.skippedHeader {
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.skippedSearchContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.skippedSearchInput {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  color: #1e3a8a;
+  width: 200px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.skippedSearchInput:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.skippedSearchInput::placeholder {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.skippedSearchClear {
+  position: absolute;
+  right: 0.5rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.skippedSearchClear:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+.skippedNoResults {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  font-style: italic;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.skippedQueueContainer {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.skippedQueueList {
+  display: flex;
+  gap: 1.5rem;
+  animation: scrollLeft 30s linear infinite;
+  white-space: nowrap;
+}
+
+.skippedQueueItem {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  min-width: fit-content;
+  transition: all 0.3s ease;
+}
+
+.skippedQueueItem:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.skippedQueueNumber {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-family: var(--font-rubik);
+}
+
+.skippedQueueName {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scrollLeft {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Responsive Design for Skipped Bar */
+@media (max-width: 768px) {
+  .skippedBarContent {
+    padding: 0.4rem 1rem;
+    gap: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .skippedHeader {
+    font-size: 1rem;
+    padding: 0.25rem 0.6rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .skippedSearchInput {
+    width: 100%;
+    max-width: 250px;
+  }
+  
+  .skippedQueueItem {
+    padding: 0.4rem 0.8rem;
+    gap: 0.6rem;
+  }
+  
+  .skippedQueueNumber {
+    font-size: 1rem;
+  }
+  
+  .skippedQueueName {
+    font-size: 0.8rem;
+  }
+  
+  .skippedQueueList {
+    gap: 1.2rem;
+    animation-duration: 25s;
+  }
+}
+
+@media (max-width: 480px) {
+  .skippedBarContent {
+    padding: 0.3rem 0.8rem;
+    gap: 0.6rem;
+  }
+  
+  .skippedHeader {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+  
+  .skippedSearchInput {
+    width: 100%;
+    max-width: 200px;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+  }
+  
+  .skippedSearchInput::placeholder {
+    font-size: 0.7rem;
+  }
+  
+  .skippedQueueItem {
+    padding: 0.3rem 0.6rem;
+    gap: 0.5rem;
+  }
+  
+  .skippedQueueNumber {
+    font-size: 0.8rem;
+  }
+  
+  .skippedQueueName {
+    font-size: 0.8rem;
+  }
+  
+  .skippedQueueList {
+    gap: 1rem;
+    animation-duration: 20s;
+  }
+}
