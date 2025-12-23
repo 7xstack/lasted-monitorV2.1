@@ -428,7 +428,7 @@ export default function AddScreenModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวตาราง (ซ้าย)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
                     <input
                       type="text"
                       value={payload.head_left}
@@ -439,7 +439,7 @@ export default function AddScreenModal({
 
                   {payload.type === 'duo' && (
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">หัวตาราง (ขวา)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ขวา)</label>
                       <input
                         type="text"
                         value={payload.head_right}
@@ -673,8 +673,8 @@ export default function AddScreenModal({
                         { key: 'time_col', label: 'เปิดแถว เวลาที่รอ' },
                         { key: 'arr_l', label: 'เรียงอันดับล่าสุด (ซ้าย)' },
                         { key: 'arr_r', label: 'เรียงอันดับล่าสุด (ขวา)' },
-                        { key: 'lock_position', label: 'ล็อคตำแหน่งห้อง (ซ้าย)' },
-                        { key: 'lock_position_right', label: 'ล็อคตำแหน่งห้อง (ขวา)' },
+                        { key: 'lock_position', label: 'ล็อคตำแหน่งกำลังรับบริการ (ซ้าย)' },
+                        { key: 'lock_position_right', label: 'ล็อคตำแหน่งกำลังรับบริการ (ขวา)' },
                       ].map((item) => (
                         <div key={item.key} className="flex items-center space-x-3">
                           <div className="switch">
@@ -831,7 +831,7 @@ export default function AddScreenModal({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* การซ่อนข้อมูลในห้อง */}
                     <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในห้อง</h4>
+                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในกำลังรับบริการ</h4>
                       <div className="space-y-3">
                         <div className="flex items-center gap-4">
                           <label className="switchs">
@@ -879,7 +879,7 @@ export default function AddScreenModal({
 
                     {/* การซ่อนข้อมูลในตาราง */}
                     <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในตาราง</h4>
+                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในรอรับบริการ</h4>
                       <div className="space-y-3">
                         <div className="flex items-center gap-4">
                           <label className="switchs">

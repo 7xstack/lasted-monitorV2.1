@@ -118,7 +118,7 @@
 .hospitalName {
   color: #0c266d;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 
 .checkupButton {
@@ -128,7 +128,7 @@
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: bold;
-  font-size: 1rem;
+  font-size: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -631,7 +631,7 @@
   
   .checkupButton {
     padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    font-size: 1.3rem;
   }
 }
 
@@ -685,7 +685,7 @@
   }
   
   .hospitalName {
-    font-size: 1rem;
+    font-size: 1.3rem;
   }
   
   .mainContent {

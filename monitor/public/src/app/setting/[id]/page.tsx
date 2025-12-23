@@ -967,7 +967,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 <div>
-                  <label className="block text-md font-medium text-slate-700 mb-2">หัวตาราง (ซ้าย)</label>
+                  <label className="block text-md font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
                   <input
                     type="text"
                     value={payload.head_left}
@@ -979,7 +979,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
                 {payload.type === 'duo' && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวตาราง (ขวา)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ขวา)</label>
                     <input
                       type="text"
                       value={payload.head_right}
@@ -1705,7 +1705,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* การซ่อนข้อมูลในห้อง */}
                 <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในห้อง</h4>
+                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในกำลังรับบริการ</h4>
                   <div className="space-y-3">
                     {/* <div className="flex items-center space-x-3">
                       <div className="switch">
@@ -1773,7 +1773,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
                 {/* การซ่อนข้อมูลในตาราง */}
                 <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในตาราง</h4>
+                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในรอรับบริการ</h4>
                   <div className="space-y-3">
                     {/* <div className="flex items-center space-x-3">
                       <div className="switch">

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, use, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Settings, CheckCircle, ArrowRight, Volume2, Venus, Mars, XCircle, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Settings, CheckCircle, ArrowRight, Volume2, Venus, Mars, XCircle, Upload, ChevronDown, X as XIcon, Search } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectSeparator } from '@/components/ui/select';
 import { playGoogleTTS, THAI_VOICES } from '../../../lib/google-tts';
 
@@ -55,7 +56,10 @@ interface PayloadData {
 }
 
 export default function EditSettingPage({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter();
   const resolvedParams = use(params);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
@@ -71,6 +75,14 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
   const [rightRooms, setRightRooms] = useState<string[]>(['', '']);
   const [isPreviewingVoice, setIsPreviewingVoice] = useState(false);
   
+  // State สำหรับ Department multi-select
+  const [departments, setDepartments] = useState<Array<{code: string; name: string}>>([]);
+  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false);
+  const [showLeftDeptDropdown, setShowLeftDeptDropdown] = useState(false);
+  const [showRightDeptDropdown, setShowRightDeptDropdown] = useState(false);
+  const [deptSearchLeft, setDeptSearchLeft] = useState('');
+  const [deptSearchRight, setDeptSearchRight] = useState('');
+  
   // State สำหรับเก็บข้อมูล urgent levels
   const [urgentLevels, setUrgentLevels] = useState<Array<{ID: number; Urgent_level: string; Color: string}>>([]);
   
@@ -85,10 +97,12 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
   const [gradientEndColor, setGradientEndColor] = useState('#001B7A');
   const [gradientAngle, setGradientAngle] = useState(153);
   
+  const defaultHospitalName = process.env.NEXT_PUBLIC_HOSPITAL_NAME || 'โรงพยาบาล';
+  
   const [payload, setPayload] = useState<PayloadData>({
     type: 'single',
     typeMonitor: '',
-    n_hospital: 'โรงพยาบาล',
+    n_hospital: defaultHospitalName,
     n_department: 'ตรวจโรคทั่วไป',
     head_left: 'จุดซักประวัติ',
     head_right: 'ห้องตรวจ',
@@ -184,6 +198,51 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
     [normalizeStyleVoice]
   );
 
+  // Check authentication - ตรวจสอบทุกครั้งที่เข้าหน้า
+  useEffect(() => {
+    const checkAuth = () => {
+      if (typeof window === 'undefined') {
+        setIsCheckingAuth(false);
+        return;
+      }
+      
+      const authStatus = sessionStorage.getItem('isAuthenticated');
+      const isValid = authStatus === 'true';
+      
+      if (!isValid) {
+        // ล้างค่าเก่าที่อาจจะเหลืออยู่
+        sessionStorage.removeItem('isAuthenticated');
+        sessionStorage.removeItem('username');
+        setIsAuthenticated(false);
+        setIsCheckingAuth(false);
+        // ใช้ window.location.href เพื่อบังคับ redirect ทันที
+        window.location.href = '/login';
+        return;
+      }
+      
+      setIsAuthenticated(true);
+      setIsCheckingAuth(false);
+    };
+
+    // ตรวจสอบทันที
+    checkAuth();
+    
+    // ตรวจสอบเป็นระยะๆ เพื่อป้องกันการแก้ไข sessionStorage
+    const intervalId = setInterval(() => {
+      if (typeof window === 'undefined') return;
+      
+      const currentAuthStatus = sessionStorage.getItem('isAuthenticated');
+      if (currentAuthStatus !== 'true') {
+        sessionStorage.removeItem('isAuthenticated');
+        sessionStorage.removeItem('username');
+        setIsAuthenticated(false);
+        window.location.href = '/login';
+      }
+    }, 500);
+    
+    return () => clearInterval(intervalId);
+  }, [router]);
+
   // Fetch urgent levels
   useEffect(() => {
     const fetchUrgentLevels = async () => {
@@ -211,6 +270,13 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
         
         if (result.success && result.data) {
           const data = result.data;
+          
+          // ตรวจสอบว่าเป็น swap type - ถ้าเป็นให้ redirect กลับไปหน้า setting
+          if (data.type === 'swap') {
+            console.log('[Setting] ไม่สามารถแก้ไข Swap Monitor ได้');
+            router.push('/setting');
+            return;
+          }
           
           // แปลง station_left และ station_right จาก comma-separated string เป็น array
           const stationLeftString = data.station_l || '';
@@ -384,6 +450,99 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
     fetchData();
   }, [resolvedParams.id, normalizeStyleVoice]);
+
+  // Fetch departments
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setIsLoadingDepartments(true);
+        const response = await fetch('/api/department');
+        const data = await response.json();
+        if (data.success && data.data) {
+          setDepartments(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      } finally {
+        setIsLoadingDepartments(false);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  // ปิด dropdown เมื่อคลิกข้างนอก
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.dept-dropdown-container')) {
+        setShowLeftDeptDropdown(false);
+        setShowRightDeptDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // ฟังก์ชันสำหรับจัดการ Department multi-select (ซ้าย)
+  const getSelectedDeptCodes = (queryValue: string): string[] => {
+    return queryValue ? queryValue.split(',').map(code => code.trim()).filter(code => code) : [];
+  };
+
+  // ฟังก์ชันสำหรับดึงชื่อแผนกที่เลือก (สำหรับแสดงใน parentheses)
+  const getSelectedDeptNames = (queryValue: string): string => {
+    const codes = getSelectedDeptCodes(queryValue);
+    if (codes.length === 0 || departments.length === 0) return '';
+    const names = codes
+      .map(code => {
+        // ลอง match ทั้ง string และ number
+        const dept = departments.find(d => 
+          String(d.code) === String(code) || 
+          d.code === code
+        );
+        return dept ? dept.name : null;
+      })
+      .filter((name): name is string => name !== null);
+    return names.join(', ');
+  };
+
+  const handleDeptToggle = (deptCode: string, side: 'left' | 'right') => {
+    const currentQuery = side === 'left' ? payload.query_left : payload.query_right;
+    const selectedCodes = getSelectedDeptCodes(currentQuery);
+    
+    if (selectedCodes.includes(deptCode)) {
+      // ถ้าเลือกอยู่แล้ว ให้ลบออก
+      const newCodes = selectedCodes.filter(code => code !== deptCode);
+      const newQuery = newCodes.join(',');
+      if (side === 'left') {
+        setPayload(prev => ({ ...prev, query_left: newQuery }));
+      } else {
+        setPayload(prev => ({ ...prev, query_right: newQuery }));
+      }
+    } else {
+      // ถ้ายังไม่เลือก ให้เพิ่มเข้าไป
+      const newCodes = [...selectedCodes, deptCode];
+      const newQuery = newCodes.join(',');
+      if (side === 'left') {
+        setPayload(prev => ({ ...prev, query_left: newQuery }));
+      } else {
+        setPayload(prev => ({ ...prev, query_right: newQuery }));
+      }
+    }
+  };
+
+  const handleRemoveDept = (deptCode: string, side: 'left' | 'right') => {
+    const currentQuery = side === 'left' ? payload.query_left : payload.query_right;
+    const selectedCodes = getSelectedDeptCodes(currentQuery);
+    const newCodes = selectedCodes.filter(code => code !== deptCode);
+    const newQuery = newCodes.join(',');
+    if (side === 'left') {
+      setPayload(prev => ({ ...prev, query_left: newQuery }));
+    } else {
+      setPayload(prev => ({ ...prev, query_right: newQuery }));
+    }
+  };
 
   // ฟังก์ชันสำหรับจัดการเมื่อ amount เปลี่ยน
   const handleAmountLeftChange = (newAmount: number) => {
@@ -635,6 +794,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
       
       const submitPayload = {
         ...payload,
+        n_hospital: defaultHospitalName, // ใช้ค่าจาก .env แทนค่าจาก payload
         station_left: stationLeft,
         station_right: stationRight,
         style_voice: styleVoiceValue
@@ -679,6 +839,18 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
       setIsLoading(false);
     }
   };
+
+  // ไม่แสดงเนื้อหาจนกว่าจะตรวจสอบ authentication เสร็จ
+  if (isCheckingAuth || isAuthenticated === null || isAuthenticated === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-blue-50/30 to-slate-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: '#043566', borderTopColor: 'transparent' }}></div>
+          <p className="text-slate-600 font-medium">กำลังตรวจสอบสิทธิ์การเข้าถึง...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isFetching) {
     return (
@@ -948,10 +1120,11 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                   <label className="block text-sm font-medium text-slate-700 mb-2">ชื่อโรงพยาบาล</label>
                   <input
                     type="text"
-                    value={payload.n_hospital}
-                    onChange={(e) => setPayload(prev => ({ ...prev, n_hospital: e.target.value }))}
-                    className="w-full px-4 py-2.5 border rounded-xl focus:ring-2 transition-all shadow-sm"
-                    style={{ borderColor: '#e2e8f0' }}
+                    value={defaultHospitalName}
+                    readOnly
+                    disabled
+                    className="w-full px-4 py-2.5 border rounded-xl transition-all shadow-sm bg-slate-50 cursor-not-allowed"
+                    style={{ borderColor: '#e2e8f0', color: '#64748b' }}
                   />
                 </div>
 
@@ -967,7 +1140,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 <div>
-                  <label className="block text-md font-medium text-slate-700 mb-2">หัวตาราง (ซ้าย)</label>
+                  <label className="block text-md font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
                   <input
                     type="text"
                     value={payload.head_left}
@@ -979,7 +1152,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
                 {payload.type === 'duo' && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวตาราง (ขวา)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ขวา)</label>
                     <input
                       type="text"
                       value={payload.head_right}
@@ -1025,31 +1198,142 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                           ชื่อห้อง ({payload.amount_left} ห้อง)
                         </label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {leftRooms.slice(0, payload.amount_left).map((room, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
-                              <input
-                                type="text"
-                                value={room}
-                                onChange={(e) => handleLeftRoomChange(index, e.target.value)}
-                                className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-sm mt-1"
-                                placeholder={`ห้อง ${index + 1}`}
-                              />
-                            </div>
-                          ))}
+                          {leftRooms.slice(0, payload.amount_left).map((room, index) => {
+                            const deptNames = getSelectedDeptNames(payload.query_left);
+                            return (
+                              <div key={index} className="flex items-center space-x-2">
+                                <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
+                                <div className="flex-1 relative">
+                                  <input
+                                    type="text"
+                                    value={room}
+                                    onChange={(e) => handleLeftRoomChange(index, e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-sm mt-1"
+                                    style={{ paddingRight: deptNames ? '120px' : '0.75rem' }}
+                                    placeholder={`ห้อง ${index + 1}`}
+                                  />
+                                  {deptNames && deptNames.length > 0 && (
+                                    <span 
+                                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-slate-500 pointer-events-none whitespace-nowrap"
+                                      style={{ zIndex: 10 }}
+                                    >
+                                      ({deptNames})
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
 
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-slate-700 mb-2">Department ID</label>
-                      <input
-                        type="text"
-                        value={payload.query_left}
-                        onChange={(e) => setPayload(prev => ({ ...prev, query_left: e.target.value }))}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all mt-1"
-                        placeholder="Department ID"
-                      />
+                      <div className="relative dept-dropdown-container">
+                        {/* Selected Departments Tags */}
+                        {getSelectedDeptCodes(payload.query_left).length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {getSelectedDeptCodes(payload.query_left).map((code) => {
+                              const dept = departments.find(d => d.code === code);
+                              return (
+                                <span
+                                  key={code}
+                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+                                  style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
+                                >
+                                  {dept ? dept.name : code}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveDept(code, 'left')}
+                                    className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                  >
+                                    <XIcon className="w-3 h-3" />
+                                  </button>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                        
+                        {/* Dropdown Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowLeftDeptDropdown(!showLeftDeptDropdown);
+                            setDeptSearchLeft('');
+                          }}
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all flex items-center justify-between bg-white"
+                        >
+                          <span className="text-slate-500">
+                            {getSelectedDeptCodes(payload.query_left).length > 0 
+                              ? `เลือกแล้ว ${getSelectedDeptCodes(payload.query_left).length} แผนก`
+                              : 'เลือกแผนก...'}
+                          </span>
+                          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showLeftDeptDropdown ? 'transform rotate-180' : ''}`} />
+                        </button>
+                        
+                        {/* Dropdown Menu */}
+                        {showLeftDeptDropdown && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-hidden">
+                            {/* Search */}
+                            <div className="p-3 border-b border-slate-200">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input
+                                  type="text"
+                                  value={deptSearchLeft}
+                                  onChange={(e) => setDeptSearchLeft(e.target.value)}
+                                  placeholder="ค้นหาแผนก..."
+                                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* Department List */}
+                            <div className="max-h-48 overflow-y-auto">
+                              {isLoadingDepartments ? (
+                                <div className="p-4 text-center text-slate-500 text-sm">กำลังโหลด...</div>
+                              ) : (
+                                departments
+                                  .filter(dept => {
+                                    const searchLower = deptSearchLeft.toLowerCase();
+                                    return dept.name.toLowerCase().includes(searchLower) || 
+                                           dept.code.toLowerCase().includes(searchLower);
+                                  })
+                                  .map((dept) => {
+                                    const isSelected = getSelectedDeptCodes(payload.query_left).includes(dept.code);
+                                    return (
+                                      <button
+                                        key={dept.code}
+                                        type="button"
+                                        onClick={() => handleDeptToggle(dept.code, 'left')}
+                                        className={`w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors flex items-center gap-2 ${
+                                          isSelected ? 'bg-blue-50' : ''
+                                        }`}
+                                      >
+                                        <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
+                                          isSelected 
+                                            ? 'border-blue-500 bg-blue-500' 
+                                            : 'border-slate-300'
+                                        }`}>
+                                          {isSelected && (
+                                            <CheckCircle className="w-3 h-3 text-white" />
+                                          )}
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="font-medium text-slate-800">{dept.name}</div>
+                                          <div className="text-xs text-slate-500">Code: {dept.code}</div>
+                                        </div>
+                                      </button>
+                                    );
+                                  })
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1081,31 +1365,142 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                             ชื่อห้อง ({payload.amount_right} ห้อง)
                           </label>
                           <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {rightRooms.slice(0, payload.amount_right).map((room, index) => (
-                              <div key={index} className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
-                                <input
-                                  type="text"
-                                  value={room}
-                                  onChange={(e) => handleRightRoomChange(index, e.target.value)}
-                                  className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-sm"
-                                  placeholder={`ห้อง ${index + 1}`}
-                                />
-                              </div>
-                            ))}
+                            {rightRooms.slice(0, payload.amount_right).map((room, index) => {
+                              const deptNames = getSelectedDeptNames(payload.query_right);
+                              return (
+                                <div key={index} className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
+                                  <div className="flex-1 relative">
+                                    <input
+                                      type="text"
+                                      value={room}
+                                      onChange={(e) => handleRightRoomChange(index, e.target.value)}
+                                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-sm"
+                                      style={{ paddingRight: deptNames ? '120px' : '0.75rem' }}
+                                      placeholder={`ห้อง ${index + 1}`}
+                                    />
+                                    {deptNames && deptNames.length > 0 && (
+                                      <span 
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-slate-500 pointer-events-none whitespace-nowrap"
+                                        style={{ zIndex: 10 }}
+                                      >
+                                        ({deptNames})
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
 
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-2">Department ID (ขวา)</label>
-                        <input
-                          type="text"
-                          value={payload.query_right}
-                          onChange={(e) => setPayload(prev => ({ ...prev, query_right: e.target.value }))}
-                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-                          placeholder="Department ID"
-                        />
+                        <div className="relative dept-dropdown-container">
+                          {/* Selected Departments Tags */}
+                          {getSelectedDeptCodes(payload.query_right).length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {getSelectedDeptCodes(payload.query_right).map((code) => {
+                                const dept = departments.find(d => d.code === code);
+                                return (
+                                  <span
+                                    key={code}
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+                                    style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
+                                  >
+                                    {dept ? dept.name : code}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveDept(code, 'right')}
+                                      className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                    >
+                                      <XIcon className="w-3 h-3" />
+                                    </button>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          )}
+                          
+                          {/* Dropdown Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowRightDeptDropdown(!showRightDeptDropdown);
+                              setDeptSearchRight('');
+                            }}
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all flex items-center justify-between bg-white"
+                          >
+                            <span className="text-slate-500">
+                              {getSelectedDeptCodes(payload.query_right).length > 0 
+                                ? `เลือกแล้ว ${getSelectedDeptCodes(payload.query_right).length} แผนก`
+                                : 'เลือกแผนก...'}
+                            </span>
+                            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showRightDeptDropdown ? 'transform rotate-180' : ''}`} />
+                          </button>
+                          
+                          {/* Dropdown Menu */}
+                          {showRightDeptDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-hidden">
+                              {/* Search */}
+                              <div className="p-3 border-b border-slate-200">
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                  <input
+                                    type="text"
+                                    value={deptSearchRight}
+                                    onChange={(e) => setDeptSearchRight(e.target.value)}
+                                    placeholder="ค้นหาแผนก..."
+                                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              </div>
+                              
+                              {/* Department List */}
+                              <div className="max-h-48 overflow-y-auto">
+                                {isLoadingDepartments ? (
+                                  <div className="p-4 text-center text-slate-500 text-sm">กำลังโหลด...</div>
+                                ) : (
+                                  departments
+                                    .filter(dept => {
+                                      const searchLower = deptSearchRight.toLowerCase();
+                                      return dept.name.toLowerCase().includes(searchLower) || 
+                                             dept.code.toLowerCase().includes(searchLower);
+                                    })
+                                    .map((dept) => {
+                                      const isSelected = getSelectedDeptCodes(payload.query_right).includes(dept.code);
+                                      return (
+                                        <button
+                                          key={dept.code}
+                                          type="button"
+                                          onClick={() => handleDeptToggle(dept.code, 'right')}
+                                          className={`w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors flex items-center gap-2 ${
+                                            isSelected ? 'bg-blue-50' : ''
+                                          }`}
+                                        >
+                                          <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
+                                            isSelected 
+                                              ? 'border-blue-500 bg-blue-500' 
+                                              : 'border-slate-300'
+                                          }`}>
+                                            {isSelected && (
+                                              <CheckCircle className="w-3 h-3 text-white" />
+                                            )}
+                                          </div>
+                                          <div className="flex-1">
+                                            <div className="font-medium text-slate-800">{dept.name}</div>
+                                            <div className="text-xs text-slate-500">Code: {dept.code}</div>
+                                          </div>
+                                        </button>
+                                      );
+                                    })
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1164,8 +1559,8 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                       { key: 'time_col', label: 'เปิดแถว เวลาที่รอ' },
                       { key: 'arr_l', label: 'เรียงอันดับล่าสุด (ซ้าย)' },
                       { key: 'arr_r', label: 'เรียงอันดับล่าสุด (ขวา)' },
-                      { key: 'lock_position', label: 'ล็อคตำแหน่งห้อง (ซ้าย)' },
-                      { key: 'lock_position_right', label: 'ล็อคตำแหน่งห้อง (ขวา)' },
+                      { key: 'lock_position', label: 'ล็อคตำแหน่งกำลังรับบริการ (ซ้าย)' },
+                      { key: 'lock_position_right', label: 'ล็อคตำแหน่งกำลังรับบริการ (ขวา)' },
                     ].map((item) => {
                       // ตรวจสอบว่า checkbox ควร disabled หรือไม่
                       let isDisabled = false;
@@ -1751,7 +2146,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {/* การซ่อนข้อมูลในห้อง */}
                 <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในห้อง</h4>
+                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในกำลังรับบริการ</h4>
                   <div className="space-y-3">
                     {/* <div className="flex items-center space-x-3">
                       <div className="switch">
@@ -1819,7 +2214,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
                 {/* การซ่อนข้อมูลในตาราง */}
                 <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในตาราง</h4>
+                  <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในรอรับบริการ</h4>
                   <div className="space-y-3">
                     {/* <div className="flex items-center space-x-3">
                       <div className="switch">

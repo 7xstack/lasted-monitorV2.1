@@ -58,11 +58,13 @@ export async function deleteSettingByMonitor(typeMonitor: string) {
 
 // ข้อมูลเริ่มต้นสำหรับหน้าจอใหม่
 export function getDefaultSetting(typeMonitor: string) {
+  const defaultHospitalName = process.env.NEXT_PUBLIC_HOSPITAL_NAME || 'โรงพยาบาล';
+  
   return {
     typeMonitor,
     ads: '',
     type: 'ประเภทหน้าจอ',
-    n_hospital: 'โรงพยาบาล',
+    n_hospital: defaultHospitalName,
     n_department: 'ตรวจโรคทั่วไป',
     head_left: 'จุดซักประวัติ',
     head_right: 'ห้องตรวจ',

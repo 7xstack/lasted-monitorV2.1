@@ -68,19 +68,19 @@ export default function SwapModal({
             {/* เวลารอ (Time Wait) */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                เวลาแสดงแต่ละหน้าจอ (หน่วย: ms)
+                เวลาแสดงแต่ละหน้าจอ (หน่วย: วินาที)
               </label>
               <input
                 type="number"
-                min="300"
-                step="100"
+                min="1"
+                step="1"
                 value={swapTimeWait}
-                onChange={(e) => onSwapTimeWaitChange(parseInt(e.target.value) || 2000)}
+                onChange={(e) => onSwapTimeWaitChange(parseInt(e.target.value) || 20)}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-                placeholder="2000"
+                placeholder="20"
               />
               <p className="text-xs text-slate-500 mt-1">
-                2000 = 20 วินาที (แนะนำ)
+                20 = 20 วินาที (แนะนำ)
               </p>
             </div>
 
@@ -102,9 +102,21 @@ export default function SwapModal({
                         <option value="">-- เลือกหน้าจอ --</option>
                         {availableSettings
                           .filter(setting => setting.type !== 'swap')
+                          .sort((a, b) => {
+                            // เรียงตาม ID ก่อน (น้อยไปมาก)
+                            const aId = parseInt(String(a.id)) || 0;
+                            const bId = parseInt(String(b.id)) || 0;
+                            if (aId !== bId) {
+                              return aId - bId;
+                            }
+                            // ถ้า ID เท่ากัน ให้เรียงตามชื่อแผนก (A-Z) โดยใช้ department จาก API
+                            const aDept = String(a.department || '').toLowerCase();
+                            const bDept = String(b.department || '').toLowerCase();
+                            return aDept.localeCompare(bDept, 'th');
+                          })
                           .map((setting) => (
                             <option key={setting.id} value={setting.id}>
-                              ID: {setting.id} - {setting.n_hospital} ({setting.n_department})
+                              ID: {setting.id} - {setting.department || ''}
                             </option>
                           ))}
                       </select>

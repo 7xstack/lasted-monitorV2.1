@@ -25,7 +25,7 @@
   top: 0;
   left: 0;
   right: 0;
-  animation: slideInFromRight 1.2s ease-in-out forwards;
+  animation: slideInFromRight 1.5s ease-in-out forwards;
   background: #dff4f7;
   min-height: 100vh;
   padding: 15px;
@@ -37,7 +37,7 @@
   top: 0;
   left: 0;
   right: 0;
-  animation: slideInFromLeft 1.2s ease-in-out forwards;
+  animation: slideInFromLeft 1.5s ease-in-out forwards;
   background: #dff4f7;
   min-height: 100vh;
   padding: 15px;
@@ -118,7 +118,7 @@
 .hospitalName {
   color: #0c266d;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 
 .checkupButton {
@@ -128,7 +128,7 @@
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: bold;
-  font-size: 1rem;
+  font-size: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -651,7 +651,7 @@
   
   .checkupButton {
     padding: 0.5rem 1rem;
-    font-size: 0.8rem;
+    font-size: 1.3rem;
   }
 }
 
@@ -705,7 +705,7 @@
   }
   
   .hospitalName {
-    font-size: 1rem;
+    font-size: 1.3rem;
   }
   
   .mainContent {

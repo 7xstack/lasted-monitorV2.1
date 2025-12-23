@@ -1146,11 +1146,15 @@ app.post('/visit-queue-files', async (req, res) => {
 				}
 			}
 
-			// สร้างไฟล์ temp สำหรับ pname (ทำงานทุกกรณี โดยมี default เป็น "คุณ")
+			// สร้างไฟล์ temp สำหรับ pname (เฉพาะเมื่อมี name)
 			const dynamicTasks = [];
-			const prefixForAll = getPrefixFromPname(pnameInput);
-			if (prefixForAll) {
-				dynamicTasks.push(() => synthesizeToTempFile(prefixForAll, styleVoice, speakingRate, maybeApiKey));
+			// ตรวจสอบว่ามี name หรือ HN หรือไม่ (ถ้าไม่มีทั้งสองอย่าง ไม่ต้องสร้าง pname)
+			const hasName = (nameInput && String(nameInput).trim()) || (hnInput && String(hnInput).trim());
+			if (hasName) {
+				const prefixForAll = getPrefixFromPname(pnameInput);
+				if (prefixForAll) {
+					dynamicTasks.push(() => synthesizeToTempFile(prefixForAll, styleVoice, speakingRate, maybeApiKey));
+				}
 			}
 			const tempChunks = await Promise.all(dynamicTasks.map(fn => fn()));
 			// ต่อท้ายไฟล์ pname จาก temp

@@ -396,12 +396,19 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
     // Function สำหรับเริ่ม Transition
     const startTransition = (direction: 'left' | 'right') => {
       setSlideDirection(direction);
-      setIsTransitioning(true);
-      setIsFading(true);
+      setIsTransitioning(true); // เริ่มจอเก่าเลื่อนออก
+      setIsFading(false); // ยังไม่แสดงจอใหม่
+      
+      // หลังจาก 0.6s (จอเก่าเลื่อนออกเสร็จ) สลับข้อมูลและแสดงจอใหม่
       setTimeout(() => {
-        setIsTransitioning(false);
-        setIsFading(false);
-      }, 1200); // ต้องตรงกับ duration ใน CSS
+        setIsFading(true); // แสดงจอใหม่และเริ่มเลื่อนเข้ามา
+        
+        // หลังจาก 1.5s (จอใหม่เลื่อนเข้ามาเสร็จ) ปิด state
+        setTimeout(() => {
+          setIsTransitioning(false);
+          setIsFading(false);
+        }, 1500); // 1.5s สำหรับจอใหม่เลื่อนเข้ามา
+      }, 600); // 0.6s สำหรับจอเก่าเลื่อนออก
     };
 
     // Function สำหรับส่ง Registration Message

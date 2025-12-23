@@ -80,7 +80,7 @@ export default function SwapModal({
                 placeholder="2000"
               />
               <p className="text-xs text-slate-500 mt-1">
-                2000 = 20 วินาที (แนะนำ)
+                20000 = 20 วินาที (แนะนำ)
               </p>
             </div>
 

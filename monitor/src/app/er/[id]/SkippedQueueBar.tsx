@@ -15,6 +15,16 @@ export default function SkippedQueueBar({ skippedData, setting }: SkippedQueueBa
         : { backgroundColor: setting.color_static })
     : {};
 
+  // Format time_call ให้แสดงแค่ HH:MM:SS (ตัด milliseconds และส่วนอื่นๆ ออก)
+  const formatTime = (timeCall: string | undefined): string => {
+    if (!timeCall) return '';
+    // ตัด milliseconds และส่วนอื่นๆ ออก โดยใช้ split('.') หรือ regex
+    const timeOnly = timeCall.split('.')[0]; // ตัดส่วนหลังจุดออก
+    // ตรวจสอบว่าเป็นรูปแบบ HH:MM:SS หรือไม่
+    const timeMatch = timeOnly.match(/(\d{2}:\d{2}:\d{2})/);
+    return timeMatch ? timeMatch[1] : timeOnly;
+  };
+
   return (
     <div className={styles.skippedBar} style={backgroundColorStyle}>
       <div className={styles.skippedBarContent}>
@@ -33,6 +43,7 @@ export default function SkippedQueueBar({ skippedData, setting }: SkippedQueueBa
                     {setting.stem_surname_table !== 'name' 
                       ? formatPatientName(setting, item)
                       : item.name}
+                    {item.time_call && ` (${formatTime(item.time_call)})`}
                   </span>
                 </div>
               ))

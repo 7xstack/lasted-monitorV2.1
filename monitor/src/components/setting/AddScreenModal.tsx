@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Save, Venus, Mars, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Venus, Mars, Plus, Volume2, Info } from 'lucide-react';
+import Link from 'next/link';
 import { PayloadData } from './types';
 import DepartmentSelectPopup from '@/components/DepartmentSelectPopup';
 import StationSelectPopup from '@/components/StationSelectPopup';
+import { playGoogleTTS, THAI_VOICES } from '@/lib/google-tts';
 
 interface AddScreenModalProps {
   isOpen: boolean;
@@ -44,6 +46,65 @@ export default function AddScreenModal({
   const [leftDepartmentName, setLeftDepartmentName] = useState<string>('');
   const [rightDepartmentName, setRightDepartmentName] = useState<string>('');
   const [isLoadingStep1, setIsLoadingStep1] = useState(false);
+  const [isPreviewingVoice, setIsPreviewingVoice] = useState(false);
+
+  // ฟังก์ชันสำหรับหา voice candidates
+  const getVoiceCandidates = (value: string | null | undefined): string[] => {
+    const maleCandidates = [
+      THAI_VOICES.STANDARD_A,
+      THAI_VOICES.STANDARD_C,
+      THAI_VOICES.STANDARD_B,
+    ].filter(Boolean);
+
+    const femaleCandidates = [
+      THAI_VOICES.NEURAL2_C,
+      THAI_VOICES.STANDARD_B,
+      THAI_VOICES.STANDARD_A,
+    ].filter(Boolean);
+
+    if (value === 'male') {
+      return maleCandidates;
+    } else if (value === 'female') {
+      return femaleCandidates;
+    }
+    return [];
+  };
+
+  // ฟังก์ชันสำหรับเล่นเสียงตัวอย่าง (ใช้ style_voice จาก payload)
+  const handlePreviewVoice = async () => {
+    if (isPreviewingVoice) return;
+    try {
+      setIsPreviewingVoice(true);
+      const candidates = getVoiceCandidates(payload.style_voice);
+      const primaryVoice = candidates[0];
+
+      if (!primaryVoice) {
+        alert('ไม่พบเสียงตัวอย่าง');
+        setIsPreviewingVoice(false);
+        return;
+      }
+
+      const success = await playGoogleTTS({
+        text: payload.style_voice === 'male' ? 'ตัวอย่างเสียงผู้ชายครับ' : 'ตัวอย่างเสียงผู้หญิงค่ะ',
+        language: 'th-TH',
+        voice: primaryVoice,
+        voiceCandidates: candidates,
+        gender: payload.style_voice === 'male' ? 'MALE' : 'FEMALE',
+        speed: payload.style_voice === 'male' ? 0.7 : 0.8,
+        pitch: 1.0,
+        minDurationSec: 0.3,
+      });
+
+      if (!success) {
+        alert('ไม่สามารถเล่นเสียงตัวอย่างได้');
+      }
+    } catch (error) {
+      console.error('Error previewing voice:', error);
+      alert('ไม่สามารถเล่นเสียงตัวอย่างได้');
+    } finally {
+      setIsPreviewingVoice(false);
+    }
+  };
 
   // เมื่อเลือกแผนกแล้ว ให้ดึง station และตั้งค่า Department ID (ทุก type ยกเว้น duo)
   useEffect(() => {
@@ -393,7 +454,18 @@ export default function AddScreenModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">ประเภทหน้าจอ</label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <label className="block text-sm font-medium text-slate-700">ประเภทหน้าจอ</label>
+                      <Link
+                        href="/preview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 transition-colors"
+                        title="ดูตัวอย่างหน้าจอ"
+                      >
+                        <Info className="w-4 h-4" />
+                      </Link>
+                    </div>
                     <select
                       value={payload.type}
                       onChange={(e) => setPayload(prev => ({ ...prev, type: e.target.value }))}
@@ -428,7 +500,7 @@ export default function AddScreenModal({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวตาราง (ซ้าย)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
                     <input
                       type="text"
                       value={payload.head_left}
@@ -439,7 +511,7 @@ export default function AddScreenModal({
 
                   {payload.type === 'duo' && (
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">หัวตาราง (ขวา)</label>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ขวา)</label>
                       <input
                         type="text"
                         value={payload.head_right}
@@ -449,7 +521,7 @@ export default function AddScreenModal({
                     </div>
                   )}
 
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">เวลารอ (วินาที)</label>
                     <input
                       type="number"
@@ -457,7 +529,7 @@ export default function AddScreenModal({
                       onChange={(e) => setPayload(prev => ({ ...prev, time_wait: parseInt(e.target.value) }))}
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
                     />
-                  </div>
+                  </div> */}
                 </div>
                   </div>
                 )}
@@ -673,8 +745,8 @@ export default function AddScreenModal({
                         { key: 'time_col', label: 'เปิดแถว เวลาที่รอ' },
                         { key: 'arr_l', label: 'เรียงอันดับล่าสุด (ซ้าย)' },
                         { key: 'arr_r', label: 'เรียงอันดับล่าสุด (ขวา)' },
-                        { key: 'lock_position', label: 'ล็อคตำแหน่งห้อง (ซ้าย)' },
-                        { key: 'lock_position_right', label: 'ล็อคตำแหน่งห้อง (ขวา)' },
+                        { key: 'lock_position', label: 'ล็อคตำแหน่งกำลังรับบริการ (ซ้าย)' },
+                        { key: 'lock_position_right', label: 'ล็อคตำแหน่งกำลังรับบริการ (ขวา)' },
                       ].map((item) => (
                         <div key={item.key} className="flex items-center space-x-3">
                           <div className="switch">
@@ -763,7 +835,18 @@ export default function AddScreenModal({
 
                   {/* การแสดงข้อมูลเพิ่มเติม */}
                   <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                    <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การแสดงข้อมูลเพิ่มเติม</h4>
+                    <div className="flex items-center gap-2 mb-3">
+                      <h4 className="font-semibold" style={{ color: '#043566' }}>การแสดงข้อมูลเพิ่มเติม</h4>
+                      <Link
+                        href="/preview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 transition-colors"
+                        title="ดูตัวอย่างหน้าจอ"
+                      >
+                        <Info className="w-4 h-4" />
+                      </Link>
+                    </div>
                     <div className="space-y-3">
                       <div className="flex items-center space-x-3">
                         <div className="switch">
@@ -802,7 +885,7 @@ export default function AddScreenModal({
                   {/* เลือกเสียงประกาศ */}
                   <div className="bg-white rounded-xl border shadow-sm p-5 md:col-span-3 text-center" style={{ borderColor: '#e2e8f0' }}>
                     <h4 className="font-semibold mb-4" style={{ color: '#043566' }}>เลือกเสียงประกาศ</h4>
-                    <div className="flex flex-wrap items-center justify-center gap-6">
+                    <div className="flex flex-wrap items-center justify-center gap-6 mb-4">
                       {[
                         { value: 'female' as const, label: 'เสียงผู้หญิง', Icon: Venus },
                         { value: 'male' as const, label: 'เสียงผู้ชาย', Icon: Mars },
@@ -822,6 +905,16 @@ export default function AddScreenModal({
                         </div>
                       ))}
                     </div>
+                    {/* ปุ่มเล่นเสียงตัวอย่าง */}
+                    <button
+                      type="button"
+                      onClick={handlePreviewVoice}
+                      disabled={isPreviewingVoice}
+                      className="mt-4 mx-auto inline-flex items-center space-x-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span>{isPreviewingVoice ? 'กำลังเล่นเสียงตัวอย่าง...' : 'เล่นเสียงตัวอย่าง'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -831,7 +924,7 @@ export default function AddScreenModal({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* การซ่อนข้อมูลในห้อง */}
                     <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในห้อง</h4>
+                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในกำลังรับบริการ</h4>
                       <div className="space-y-3">
                         <div className="flex items-center gap-4">
                           <label className="switchs">
@@ -879,7 +972,7 @@ export default function AddScreenModal({
 
                     {/* การซ่อนข้อมูลในตาราง */}
                     <div className="bg-white rounded-xl border shadow-sm hover:shadow transition-all p-4" style={{ borderColor: '#e2e8f0' }}>
-                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในตาราง</h4>
+                      <h4 className="font-semibold mb-3" style={{ color: '#043566' }}>การซ่อนข้อมูลในรอรับบริการ</h4>
                       <div className="space-y-3">
                         <div className="flex items-center gap-4">
                           <label className="switchs">

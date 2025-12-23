@@ -45,11 +45,14 @@ export interface SettingData {
   type: string;
   n_hospital: string;
   n_department: string;
+  department?: string; // field จาก API /api/id-setting
   head_left: string;
   head_right: string;
   amount_left: number;
   amount_right: number;
   query_left: string;
   query_right: string;
+  station_left?: string;
+  station_right?: string;
 }
 
