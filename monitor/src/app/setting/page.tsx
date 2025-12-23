@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, Edit, Trash2, Plus, Monitor, Home, Eye } from 'lucide-react';
+import { Settings, Edit, Trash2, Plus, Monitor, Home, Eye, FileText } from 'lucide-react';
 import { PayloadData, SettingData } from '@/components/setting/types';
 import AddScreenModal from '@/components/setting/AddScreenModal';
 import SwapModal from '@/components/setting/SwapModal';
@@ -633,14 +633,26 @@ export default function SettingPage() {
                 <p className="text-sm text-slate-600 mt-1">จัดการการตั้งค่าหน้าจอแสดงผล V3.0.0-beta.20251223</p>
               </div>
             </div>
-            <Link
-              href="/"
-              className="flex items-center space-x-2 px-5 py-2.5 bg-white hover:bg-slate-50 rounded-xl transition-all duration-200 border shadow-sm hover:shadow font-medium"
-              style={{ color: '#043566', borderColor: '#e2e8f0' }}
-            >
-              <Home className="w-5 h-5" />
-              <span>กลับหน้าหลัก</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="https://monitor.aztecthstudio.com/log"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 px-5 py-2.5 bg-white hover:bg-slate-50 rounded-xl transition-all duration-200 border shadow-sm hover:shadow font-medium"
+                style={{ color: '#043566', borderColor: '#e2e8f0' }}
+              >
+                <FileText className="w-5 h-5" />
+                <span>System Logs</span>
+              </Link>
+              <Link
+                href="/"
+                className="flex items-center space-x-2 px-5 py-2.5 bg-white hover:bg-slate-50 rounded-xl transition-all duration-200 border shadow-sm hover:shadow font-medium"
+                style={{ color: '#043566', borderColor: '#e2e8f0' }}
+              >
+                <Home className="w-5 h-5" />
+                <span>กลับหน้าหลัก</span>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
