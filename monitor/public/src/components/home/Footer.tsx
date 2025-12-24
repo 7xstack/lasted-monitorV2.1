@@ -14,7 +14,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
         <div className="mt-8 md:order-1 md:mt-0">
           <p className="text-center text-xs leading-5 text-gray-500">
-            &copy; 2024 Aztec Service Group - Qfit Monitor System. All rights reserved. V3.0.0-beta.20251223
+            &copy; 2024 Aztec Service Group - Qfit Monitor System. All rights reserved.  V3.0.0-beta.20251224
           </p>
         </div>
       </div>

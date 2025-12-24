@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Settings, Edit, Trash2, Plus, Monitor, Home, Eye, FileText } from 'lucide-react';
 import { PayloadData, SettingData } from '@/components/setting/types';
@@ -12,10 +11,6 @@ import ErrorPopup from '@/components/setting/ErrorPopup';
 
 
 export default function SettingPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [settings, setSettings] = useState<SettingData[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
@@ -37,50 +32,6 @@ export default function SettingPage() {
   const [availableSettings, setAvailableSettings] = useState<SettingData[]>([]);
   const [swapTimeWait, setSwapTimeWait] = useState<number>(20); // default 20 วินาที
 
-  // Check authentication - ตรวจสอบทุกครั้งที่เข้าหน้า setting
-  useEffect(() => {
-    const checkAuth = () => {
-      if (typeof window === 'undefined') {
-        setIsCheckingAuth(false);
-        return;
-      }
-      
-      const authStatus = sessionStorage.getItem('isAuthenticated');
-      const isValid = authStatus === 'true';
-      
-      if (!isValid) {
-        // ล้างค่าเก่าที่อาจจะเหลืออยู่
-        sessionStorage.removeItem('isAuthenticated');
-        sessionStorage.removeItem('username');
-        setIsAuthenticated(false);
-        setIsCheckingAuth(false);
-        // ใช้ window.location.href เพื่อบังคับ redirect ทันที
-        window.location.href = '/login';
-        return;
-      }
-      
-      setIsAuthenticated(true);
-      setIsCheckingAuth(false);
-    };
-
-    // ตรวจสอบทันที
-    checkAuth();
-    
-    // ตรวจสอบเป็นระยะๆ เพื่อป้องกันการแก้ไข sessionStorage
-    const intervalId = setInterval(() => {
-      if (typeof window === 'undefined') return;
-      
-      const currentAuthStatus = sessionStorage.getItem('isAuthenticated');
-      if (currentAuthStatus !== 'true') {
-        sessionStorage.removeItem('isAuthenticated');
-        sessionStorage.removeItem('username');
-        setIsAuthenticated(false);
-        window.location.href = '/login';
-      }
-    }, 500);
-    
-    return () => clearInterval(intervalId);
-  }, [router, pathname]);
 
   // Fetch settings from database
   const fetchSettings = useCallback(async () => {
@@ -606,17 +557,6 @@ export default function SettingPage() {
     }
   };
 
-  // ไม่แสดงเนื้อหาจนกว่าจะตรวจสอบ authentication เสร็จ
-  if (isCheckingAuth || isAuthenticated === null || isAuthenticated === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-blue-50/30 to-slate-50">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: '#043566', borderTopColor: 'transparent' }}></div>
-          <p className="text-slate-600 font-medium">กำลังตรวจสอบสิทธิ์การเข้าถึง...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-slate-50" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffffff, #f8fafc, #f1f5f9)' }}>
@@ -630,7 +570,7 @@ export default function SettingPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: '#043566' }}>การตั้งค่าระบบ</h1>
-                <p className="text-sm text-slate-600 mt-1">จัดการการตั้งค่าหน้าจอแสดงผล V3.0.0-beta.20251223</p>
+                <p className="text-sm text-slate-600 mt-1">จัดการการตั้งค่าหน้าจอแสดงผล  V3.0.0-beta.20251224</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

@@ -20,6 +20,13 @@ import LoadingSpinner from "../../../components/LoadingSpinner";
 
 const VOICE_DOMAIN = "https://voice.aztecthstudio.com";
 
+interface RegisterPayload {
+  type: "register";
+  id: string;
+  query_type: "single";
+  listPage?: string[];
+}
+
 const playVoicePlaylist = (
   voicePaths: string[],
   currentSoundRef: React.MutableRefObject<Howl | null>
@@ -465,7 +472,7 @@ export default function SinglePage({
       isConnectionActive = true;
       
       // ตรวจสอบว่าเป็น swap type และมี listPage
-      let registerPayload: any = {
+      const registerPayload: RegisterPayload = {
         type: "register",
         id: currentDisplayId,
         query_type: "single",

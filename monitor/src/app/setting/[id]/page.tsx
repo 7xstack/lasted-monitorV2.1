@@ -58,8 +58,6 @@ interface PayloadData {
 export default function EditSettingPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const resolvedParams = use(params);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
@@ -198,50 +196,6 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
     [normalizeStyleVoice]
   );
 
-  // Check authentication - ตรวจสอบทุกครั้งที่เข้าหน้า
-  useEffect(() => {
-    const checkAuth = () => {
-      if (typeof window === 'undefined') {
-        setIsCheckingAuth(false);
-        return;
-      }
-      
-      const authStatus = sessionStorage.getItem('isAuthenticated');
-      const isValid = authStatus === 'true';
-      
-      if (!isValid) {
-        // ล้างค่าเก่าที่อาจจะเหลืออยู่
-        sessionStorage.removeItem('isAuthenticated');
-        sessionStorage.removeItem('username');
-        setIsAuthenticated(false);
-        setIsCheckingAuth(false);
-        // ใช้ window.location.href เพื่อบังคับ redirect ทันที
-        window.location.href = '/login';
-        return;
-      }
-      
-      setIsAuthenticated(true);
-      setIsCheckingAuth(false);
-    };
-
-    // ตรวจสอบทันที
-    checkAuth();
-    
-    // ตรวจสอบเป็นระยะๆ เพื่อป้องกันการแก้ไข sessionStorage
-    const intervalId = setInterval(() => {
-      if (typeof window === 'undefined') return;
-      
-      const currentAuthStatus = sessionStorage.getItem('isAuthenticated');
-      if (currentAuthStatus !== 'true') {
-        sessionStorage.removeItem('isAuthenticated');
-        sessionStorage.removeItem('username');
-        setIsAuthenticated(false);
-        window.location.href = '/login';
-      }
-    }, 500);
-    
-    return () => clearInterval(intervalId);
-  }, [router]);
 
   // Fetch urgent levels
   useEffect(() => {
@@ -840,17 +794,6 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  // ไม่แสดงเนื้อหาจนกว่าจะตรวจสอบ authentication เสร็จ
-  if (isCheckingAuth || isAuthenticated === null || isAuthenticated === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-blue-50/30 to-slate-50">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: '#043566', borderTopColor: 'transparent' }}></div>
-          <p className="text-slate-600 font-medium">กำลังตรวจสอบสิทธิ์การเข้าถึง...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (isFetching) {
     return (

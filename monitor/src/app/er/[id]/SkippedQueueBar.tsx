@@ -16,10 +16,12 @@ export default function SkippedQueueBar({ skippedData, setting }: SkippedQueueBa
     : {};
 
   // Format time_call ให้แสดงแค่ HH:MM:SS (ตัด milliseconds และส่วนอื่นๆ ออก)
-  const formatTime = (timeCall: string | undefined): string => {
+  const formatTime = (timeCall: string | number | boolean | null | undefined): string => {
     if (!timeCall) return '';
+    // Convert เป็น string ถ้าเป็น number หรือ boolean
+    const timeString = typeof timeCall === 'string' ? timeCall : String(timeCall);
     // ตัด milliseconds และส่วนอื่นๆ ออก โดยใช้ split('.') หรือ regex
-    const timeOnly = timeCall.split('.')[0]; // ตัดส่วนหลังจุดออก
+    const timeOnly = timeString.split('.')[0]; // ตัดส่วนหลังจุดออก
     // ตรวจสอบว่าเป็นรูปแบบ HH:MM:SS หรือไม่
     const timeMatch = timeOnly.match(/(\d{2}:\d{2}:\d{2})/);
     return timeMatch ? timeMatch[1] : timeOnly;
