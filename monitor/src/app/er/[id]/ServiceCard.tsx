@@ -8,9 +8,10 @@ interface ServiceCardProps {
   activePatient: VisitInfo | undefined;
   color?: string;
   count: number;
+  hideNumber?: boolean;
 }
 
-export default function ServiceCard({ setting, stationName, activePatient, color, count }: ServiceCardProps) {
+export default function ServiceCard({ setting, stationName, activePatient, color, count, hideNumber }: ServiceCardProps) {
 
   return (
     <div className={styles.serviceCard}
@@ -53,19 +54,18 @@ export default function ServiceCard({ setting, stationName, activePatient, color
             : {}
         }
       >
-        {activePatient ? (
-          <div 
-            className={styles.queueNumberSplit}
-          >
-            <span className={styles.queueLetter}>
-              {splitQueueNumber(String(activePatient.visit_q_no || '')).letter}
-            </span>
-            <span className={styles.queueNumber}>
-              {splitQueueNumber(String(activePatient.visit_q_no || '')).number}
-            </span>
-          </div>
-        ) : (
-          <span className={styles.serviceText}>{count}</span>
+        {!hideNumber && (
+          activePatient ? (
+            <div 
+              className={styles.queueNumberSplit}
+            >
+              <span className={styles.queueNumber}>
+                {splitQueueNumber(String(activePatient.visit_q_no || '')).number}
+              </span>
+            </div>
+          ) : (
+            <span className={styles.serviceText}>{count}</span>
+          )
         )}
       </div>
     </div>

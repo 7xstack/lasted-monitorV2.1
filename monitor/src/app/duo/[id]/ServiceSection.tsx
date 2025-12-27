@@ -7,9 +7,10 @@ interface ServiceSectionProps {
   sortedActiveData: VisitInfo[];
   tableNames: string[];
   isRight?: boolean;
+  hideNumber?: boolean;
 }
 
-export default function ServiceSection({ setting, sortedActiveData, tableNames, isRight = false }: ServiceSectionProps) {
+export default function ServiceSection({ setting, sortedActiveData, tableNames, isRight = false, hideNumber }: ServiceSectionProps) {
   // Find active patient for a station
   const findActivePatient = (stationName: string) => {
     return sortedActiveData.find(visit => 
@@ -70,6 +71,7 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames, 
           setting={setting}
           stationName={stationName}
           activePatient={findActivePatient(stationName)}
+          hideNumber={hideNumber}
         />
       ));
     }
@@ -82,6 +84,7 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames, 
           setting={setting}
           stationName={tableName.trim()}
           activePatient={findActivePatient(tableName)}
+          hideNumber={hideNumber}
         />
       ));
     }
@@ -98,6 +101,7 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames, 
           setting={setting}
           stationName={stationName}
           activePatient={findActivePatient(stationName)}
+          hideNumber={hideNumber}
         />
       );
     });

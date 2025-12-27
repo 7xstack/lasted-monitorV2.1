@@ -6,9 +6,10 @@ interface ServiceSectionProps {
   setting: Setting;
   sortedActiveData: VisitInfo[];
   tableNames: string[];
+  hideNumber?: boolean;
 }
 
-export default function ServiceSection({ setting, sortedActiveData, tableNames }: ServiceSectionProps) {
+export default function ServiceSection({ setting, sortedActiveData, tableNames, hideNumber }: ServiceSectionProps) {
   // Helper function to normalize station name (ลบ "โต๊ะ" prefix และ trim)
   const normalizeStationName = (station: string): string => {
     return String(station || '')
@@ -140,6 +141,7 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames }
           setting={setting}
           stationName={stationName}
           activePatient={findActivePatient(stationName)}
+          hideNumber={hideNumber}
         />
       ));
     }
@@ -152,6 +154,7 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames }
           setting={setting}
           stationName={tableName.trim()}
           activePatient={findActivePatient(tableName)}
+          hideNumber={hideNumber}
         />
       ));
     }
@@ -165,6 +168,7 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames }
           setting={setting}
           stationName={stationName}
           activePatient={findActivePatient(stationName)}
+          hideNumber={hideNumber}
         />
       );
     });

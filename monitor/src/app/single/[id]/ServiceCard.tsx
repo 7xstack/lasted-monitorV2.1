@@ -6,12 +6,14 @@ interface ServiceCardProps {
   setting: Setting;
   stationName: string;
   activePatient: VisitInfo | undefined;
+  hideNumber?: boolean;
 }
 
 export default function ServiceCard({
   setting,
   stationName,
   activePatient,
+  hideNumber,
 }: ServiceCardProps) {
   return (
     <div className={styles.serviceCard}>
@@ -49,16 +51,13 @@ export default function ServiceCard({
             : { backgroundColor: "#0066AA" }
         }
       >
-        {activePatient ? (
+        {!hideNumber && activePatient && (
           <div className={styles.queueNumberSplit}>
-            <span className={styles.queueLetter}>
-              {splitQueueNumber(String(activePatient.visit_q_no || "")).letter}
-            </span>
             <span className={styles.queueNumber}>
               {splitQueueNumber(String(activePatient.visit_q_no || "")).number}
             </span>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );

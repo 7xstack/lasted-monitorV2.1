@@ -27,8 +27,8 @@ export default function SettingPage() {
   const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState<string>('all');
 
   // State สำหรับ Swap Modal
-  const [swapCount, setSwapCount] = useState<number>(0);
-  const [swapSelections, setSwapSelections] = useState<string[]>([]);
+  const [swapCount, setSwapCount] = useState<number>(2);
+  const [swapSelections, setSwapSelections] = useState<string[]>(['', '']);
   const [availableSettings, setAvailableSettings] = useState<SettingData[]>([]);
   const [swapTimeWait, setSwapTimeWait] = useState<number>(20); // default 20 วินาที
 
@@ -211,30 +211,30 @@ export default function SettingPage() {
     arr_r: false,
     set_descrip: false,
     set_notice: false,
-    stem_surname: 'name',
+    stem_surname: 'false',
     type_popup: '1',
     stem_popup: 'false',
-    stem_surname_popup: 'false',
-    stem_surname_table: 'name',
+    stem_surname_popup: 'true',
+    stem_surname_table: 'true',
     stem_name: 'name',
     stem_name_table: 'name',
-    urgent_color: true,
-    status_patient: true,
+    urgent_color: false,
+    status_patient: false,
     status_check: false,
     lock_position: false,
     lock_position_right: false,
-    urgent_level: true,
+    urgent_level: false,
     a_sound: true,
     b_sound: false,
     c_sound: false,
-    time_col: true,
+    time_col: false,
     station_left: '',
     station_right: '',
-    query_left: '2',
-    query_right: '2',
+    query_left: '',
+    query_right: '',
     listPage: '',
     style_voice: 'female',
-    voice: '1',
+    voice: '3',
   });
 
   // Auto-generate ID
@@ -242,8 +242,8 @@ export default function SettingPage() {
     try {
       const response = await fetch('/api/setting/count');
       const data = await response.json();
-      // ใช้ maxId แทน count เพื่อป้องกันการ generate ID ซ้ำ
-      const nextId = (data.maxId || 0) + 1;
+      // ใช้ maxSettingId (ID สูงสุดในฐานข้อมูล) เพื่อป้องกันการ generate ID ซ้ำ
+      const nextId = (data.maxSettingId || 0) + 1;
       setPayload(prev => ({ ...prev, typeMonitor: nextId.toString() }));
     } catch (error) {
       console.error('Error generating ID:', error);
@@ -296,30 +296,30 @@ export default function SettingPage() {
       arr_r: false,
       set_descrip: false,
       set_notice: false,
-      stem_surname: 'name',
-      stem_surname_table: 'name',
+      stem_surname: 'true',
+      stem_surname_table: 'true',
       stem_name: 'name',
       stem_name_table: 'name',
       type_popup: '1',
       stem_popup: 'false',
-      stem_surname_popup: 'false',
-      urgent_color: true,
-      status_patient: true,
+      stem_surname_popup: 'true',
+      urgent_color: false,
+      status_patient: false,
       status_check: false,
       lock_position: false,
       lock_position_right: false,
-      urgent_level: true,
+      urgent_level: false,
       a_sound: true,
       b_sound: false,
       c_sound: false,
-      time_col: true,
+      time_col: false,
       station_left: '',
       station_right: '',
-      query_left: '2',
-      query_right: '2',
+      query_left: '',
+      query_right: '',
       listPage: '',
       style_voice: 'female',
-      voice: '1',
+      voice: '3',
     });
     setCurrentStep(1);
   };
@@ -335,8 +335,8 @@ export default function SettingPage() {
   };
   const handleOpenModalSwap = async () => {
     // Reset swap modal state
-    setSwapCount(0);
-    setSwapSelections([]);
+    setSwapCount(2);
+    setSwapSelections(['', '']);
     setSwapTimeWait(20); // default 20 วินาที
     setShowModalSwap(true);
   };
@@ -359,7 +359,7 @@ export default function SettingPage() {
       // ดึง ID ล่าสุด + 1
       const countResponse = await fetch('/api/setting/count');
       const countData = await countResponse.json();
-      const nextId = (countData.maxId || 0) + 1;
+      const nextId = (countData.maxSettingId || 0) + 1;
 
       // สร้าง listPage เป็น comma-separated string
       const listPage = swapSelections.join(',');
@@ -385,17 +385,17 @@ export default function SettingPage() {
         stem_surname_table: 'name',
         stem_name: 'name',
         stem_name_table: 'name',
-        stem_name_popup: 'false',
-        urgent_color: true,
-        status_patient: true,
+        stem_name_popup: 'true',
+        urgent_color: false,
+        status_patient: false,
         status_check: false,
         lock_position: false,
         lock_position_right: false,
-        urgent_level: true,
+        urgent_level: false,
         a_sound: true,
         b_sound: false,
         c_sound: false,
-        time_col: true,
+        time_col: false,
         station_left: '',
         station_right: '',
         query_left: '2',

@@ -1,7 +1,7 @@
 import { Hash, User } from 'lucide-react';
 import styles from './page.module.css';
 import { Setting, VisitInfo } from './types';
-import { formatPatientName } from './utils';
+import { formatPatientName, splitQueueNumber } from './utils';
 
 interface InterviewTableProps {
   setting: Setting;
@@ -59,8 +59,8 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
                         }
                       >
                         <div className={styles.queueNumberSplit}>
-                          <span className={styles.queueLetter}>
-                            {queue.visit_q_no}
+                          <span className={styles.queueNumber}>
+                            {splitQueueNumber(String(queue.visit_q_no || "")).number}
                           </span>
                         </div>
                       </div>
@@ -166,7 +166,7 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
                           : '#0c266d' 
                       }}
                     >
-                      {visit.visit_q_no || ' - '}
+                      {splitQueueNumber(String(visit.visit_q_no || "")).number}
                     </span>
                   </div>
                 </td>

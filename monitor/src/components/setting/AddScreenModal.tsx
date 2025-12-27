@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Save, Venus, Mars, Plus, Volume2, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Venus, Mars, Plus, Volume2, Info, X } from 'lucide-react';
 import Link from 'next/link';
 import { PayloadData } from './types';
 import DepartmentSelectPopup from '@/components/DepartmentSelectPopup';
@@ -31,8 +31,8 @@ export default function AddScreenModal({
   onNextStep,
   onSubmit,
 }: AddScreenModalProps) {
-  const [leftStations, setLeftStations] = useState<Array<{ station_name: string }>>([]);
-  const [rightStations, setRightStations] = useState<Array<{ station_name: string }>>([]);
+  const [leftStations, setLeftStations] = useState<Array<{ station_name: string; department_code: string }>>([]);
+  const [rightStations, setRightStations] = useState<Array<{ station_name: string; department_code: string }>>([]);
   const [selectedLeftStations, setSelectedLeftStations] = useState<string[]>([]);
   const [selectedRightStations, setSelectedRightStations] = useState<string[]>([]);
   const [showDepartmentPopup, setShowDepartmentPopup] = useState(false);
@@ -40,11 +40,12 @@ export default function AddScreenModal({
   const [showRightDepartmentPopup, setShowRightDepartmentPopup] = useState(false);
   const [showLeftStationPopup, setShowLeftStationPopup] = useState(false);
   const [showRightStationPopup, setShowRightStationPopup] = useState(false);
-  const [selectedDepartmentCode, setSelectedDepartmentCode] = useState<string>('');
-  const [selectedLeftDepartmentCode, setSelectedLeftDepartmentCode] = useState<string>('');
-  const [selectedRightDepartmentCode, setSelectedRightDepartmentCode] = useState<string>('');
-  const [leftDepartmentName, setLeftDepartmentName] = useState<string>('');
-  const [rightDepartmentName, setRightDepartmentName] = useState<string>('');
+  const [selectedDepartmentCodes, setSelectedDepartmentCodes] = useState<string[]>([]);
+  const [selectedLeftDepartmentCodes, setSelectedLeftDepartmentCodes] = useState<string[]>([]);
+  const [selectedRightDepartmentCodes, setSelectedRightDepartmentCodes] = useState<string[]>([]);
+  const [leftDepartmentNames, setLeftDepartmentNames] = useState<Array<{ code: string; name: string }>>([]);
+  const [rightDepartmentNames, setRightDepartmentNames] = useState<Array<{ code: string; name: string }>>([]);
+  const [allDepartments, setAllDepartments] = useState<Array<{ code: string; name: string }>>([]);
   const [isLoadingStep1, setIsLoadingStep1] = useState(false);
   const [isPreviewingVoice, setIsPreviewingVoice] = useState(false);
 
@@ -106,69 +107,110 @@ export default function AddScreenModal({
     }
   };
 
-  // เมื่อเลือกแผนกแล้ว ให้ดึง station และตั้งค่า Department ID (ทุก type ยกเว้น duo)
+  // โหลดข้อมูลแผนกทั้งหมดเมื่อเปิด modal
   useEffect(() => {
-    if (payload.type !== 'duo' && selectedDepartmentCode) {
-      fetchStations(selectedDepartmentCode, 'left');
-      // ตั้งค่า Department ID เป็น code ของแผนก
-      setPayload(prev => ({ 
-        ...prev, 
-        query_left: selectedDepartmentCode
-      }));
-      // Reset selected stations เมื่อเปลี่ยนแผนก
-      setSelectedLeftStations([]);
-      
-      // ดึงชื่อแผนก
-      const fetchDepartmentName = async () => {
+    if (isOpen) {
+      const fetchAllDepartments = async () => {
         try {
           const response = await fetch('/api/department');
           const data = await response.json();
           if (data.success && data.data) {
-            const dept = data.data.find((d: { code: string; name: string }) => d.code === selectedDepartmentCode);
-            if (dept) {
-              setLeftDepartmentName(dept.name);
-            }
+            setAllDepartments(data.data);
           }
         } catch (error) {
-          console.error('Error fetching department name:', error);
+          console.error('Error fetching departments:', error);
         }
       };
-      fetchDepartmentName();
-    } else if (payload.type !== 'duo' && !selectedDepartmentCode) {
-      setLeftStations([]);
-      setSelectedLeftStations([]);
-      setLeftDepartmentName('');
+      fetchAllDepartments();
+    }
+  }, [isOpen]);
+
+  // อัพเดต department names เมื่อ allDepartments มีข้อมูลและมี selected codes
+  useEffect(() => {
+    if (allDepartments.length > 0) {
+      // สำหรับ single, swap, ER
+      if (payload.type !== 'duo' && selectedDepartmentCodes.length > 0 && leftDepartmentNames.length === 0) {
+        const selectedDepts = allDepartments.filter(dept => 
+          selectedDepartmentCodes.includes(String(dept.code))
+        );
+        setLeftDepartmentNames(selectedDepts);
+      }
+      // สำหรับ duo left
+      if (payload.type === 'duo' && selectedLeftDepartmentCodes.length > 0 && leftDepartmentNames.length === 0) {
+        const selectedDepts = allDepartments.filter(dept => 
+          selectedLeftDepartmentCodes.includes(String(dept.code))
+        );
+        setLeftDepartmentNames(selectedDepts);
+      }
+      // สำหรับ duo right
+      if (payload.type === 'duo' && selectedRightDepartmentCodes.length > 0 && rightDepartmentNames.length === 0) {
+        const selectedDepts = allDepartments.filter(dept => 
+          selectedRightDepartmentCodes.includes(String(dept.code))
+        );
+        setRightDepartmentNames(selectedDepts);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDepartmentCode, payload.type]);
+  }, [allDepartments, selectedDepartmentCodes, selectedLeftDepartmentCodes, selectedRightDepartmentCodes, payload.type]);
+
+  // เมื่อเลือกแผนกแล้ว ให้ดึง station และตั้งค่า Department ID (ทุก type ยกเว้น duo)
+  useEffect(() => {
+    if (payload.type !== 'duo' && selectedDepartmentCodes.length > 0) {
+      console.log('[Dept Change] Resetting selectedLeftStations because department changed:', selectedDepartmentCodes);
+      fetchStationsFromMultipleDepts(selectedDepartmentCodes, 'left');
+      // Reset selected stations เมื่อเปลี่ยนแผนก (useEffect ที่ watch selectedLeftStations จะอัพเดต station_left อัตโนมัติ)
+      setSelectedLeftStations([]);
+      // ตั้งค่า Department ID
+      setPayload(prev => ({ 
+        ...prev, 
+        query_left: selectedDepartmentCodes.join(',')
+      }));
+      // ไม่ต้อง setLeftDepartmentNames ที่นี่ เพราะถูก set ใน onMultiSelect callback แล้ว
+    } else if (payload.type !== 'duo' && selectedDepartmentCodes.length === 0) {
+      setLeftStations([]);
+      setSelectedLeftStations([]); // useEffect ที่ watch selectedLeftStations จะอัพเดต station_left อัตโนมัติ
+      setLeftDepartmentNames([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDepartmentCodes, payload.type]); // ลบ allDepartments ออกเพื่อป้องกันการเรียก API ซ้ำ
 
   // สำหรับ duo: เมื่อเลือกแผนกฝั่งซ้าย
   useEffect(() => {
-    if (payload.type === 'duo' && selectedLeftDepartmentCode) {
-      fetchStations(selectedLeftDepartmentCode, 'left');
-      // ตั้งค่า Department ID ฝั่งซ้าย (department_load)
+    if (payload.type === 'duo' && selectedLeftDepartmentCodes.length > 0) {
+      fetchStationsFromMultipleDepts(selectedLeftDepartmentCodes, 'left');
+      setSelectedLeftStations([]); // useEffect ที่ watch selectedLeftStations จะอัพเดต station_left อัตโนมัติ
+      // ตั้งค่า Department ID
       setPayload(prev => ({ 
         ...prev, 
-        query_left: selectedLeftDepartmentCode
+        query_left: selectedLeftDepartmentCodes.join(',')
       }));
-      setSelectedLeftStations([]);
+      // ไม่ต้อง setLeftDepartmentNames ที่นี่ เพราะถูก set ใน onMultiSelect callback แล้ว
+    } else if (payload.type === 'duo' && selectedLeftDepartmentCodes.length === 0) {
+      setLeftStations([]);
+      setSelectedLeftStations([]); // useEffect ที่ watch selectedLeftStations จะอัพเดต station_left อัตโนมัติ
+      setLeftDepartmentNames([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLeftDepartmentCode, payload.type]);
+  }, [selectedLeftDepartmentCodes, payload.type]); // ลบ allDepartments ออกเพื่อป้องกันการเรียก API ซ้ำ
 
   // สำหรับ duo: เมื่อเลือกแผนกฝั่งขวา
   useEffect(() => {
-    if (payload.type === 'duo' && selectedRightDepartmentCode) {
-      fetchStations(selectedRightDepartmentCode, 'right');
-      // ตั้งค่า Department ID ฝั่งขวา (department_room_load)
+    if (payload.type === 'duo' && selectedRightDepartmentCodes.length > 0) {
+      fetchStationsFromMultipleDepts(selectedRightDepartmentCodes, 'right');
+      setSelectedRightStations([]); // useEffect ที่ watch selectedRightStations จะอัพเดต station_right อัตโนมัติ
+      // ตั้งค่า Department ID
       setPayload(prev => ({ 
         ...prev, 
-        query_right: selectedRightDepartmentCode
+        query_right: selectedRightDepartmentCodes.join(',')
       }));
-      setSelectedRightStations([]);
+      // ไม่ต้อง setRightDepartmentNames ที่นี่ เพราะถูก set ใน onMultiSelect callback แล้ว
+    } else if (payload.type === 'duo' && selectedRightDepartmentCodes.length === 0) {
+      setRightStations([]);
+      setSelectedRightStations([]); // useEffect ที่ watch selectedRightStations จะอัพเดต station_right อัตโนมัติ
+      setRightDepartmentNames([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRightDepartmentCode, payload.type]);
+  }, [selectedRightDepartmentCodes, payload.type]); // ลบ allDepartments ออกเพื่อป้องกันการเรียก API ซ้ำ
 
   // โหลด selected stations และ department จาก payload เมื่อเปิด modal
   useEffect(() => {
@@ -189,61 +231,31 @@ export default function AddScreenModal({
             setSelectedRightStations(filteredRight);
           }
           
-          // สำหรับ single, swap, ER: โหลด department code และ fetch stations
+          // สำหรับ single, swap, ER: โหลด department codes และ fetch stations
           if (payload.type !== 'duo' && payload.query_left) {
-            setSelectedDepartmentCode(payload.query_left);
-            await fetchStations(payload.query_left, 'left');
-            // ดึงชื่อแผนก
-            try {
-              const response = await fetch('/api/department');
-              const data = await response.json();
-              if (data.success && data.data) {
-                const dept = data.data.find((d: { code: string; name: string }) => d.code === payload.query_left);
-                if (dept) {
-                  setLeftDepartmentName(dept.name);
-                }
-              }
-            } catch (error) {
-              console.error('Error fetching department name:', error);
-            }
+            const codes = payload.query_left.split(',').filter(c => c.trim() !== '');
+            setSelectedDepartmentCodes(codes);
+            await fetchStationsFromMultipleDepts(codes, 'left');
+            // ใช้ allDepartments ที่มีอยู่แล้ว (ถ้ายังไม่มีจะถูก fetch ใน useEffect อื่น)
+            // ถ้า allDepartments ว่าง ให้รอให้ useEffect ที่ fetch allDepartments ทำงานก่อน
+            // (จะมีการ re-render เมื่อ allDepartments เปลี่ยน)
           }
           
           // สำหรับ duo: โหลด department codes และ fetch stations
           if (payload.type === 'duo') {
-            // ดึงข้อมูลแผนกทั้งหมดครั้งเดียว
-            let departments: Array<{ code: string; name: string }> = [];
-            try {
-              const response = await fetch('/api/department');
-              const data = await response.json();
-              if (data.success && data.data) {
-                departments = data.data;
-              }
-            } catch (error) {
-              console.error('Error fetching departments:', error);
-            }
-
-            const promises: Promise<void>[] = [];
-
+            // ใช้ allDepartments ที่มีอยู่แล้ว (ถ้ายังไม่มีจะถูก fetch ใน useEffect อื่น)
             if (payload.query_left) {
-              setSelectedLeftDepartmentCode(payload.query_left);
-              promises.push(fetchStations(payload.query_left, 'left'));
-              // หาชื่อแผนกจาก code
-              const dept = departments.find((d) => d.code === payload.query_left);
-              if (dept) {
-                setLeftDepartmentName(dept.name);
-              }
+              const codes = payload.query_left.split(',').filter(c => c.trim() !== '');
+              setSelectedLeftDepartmentCodes(codes);
+              await fetchStationsFromMultipleDepts(codes, 'left');
+              // ถ้า allDepartments ว่าง ให้รอให้ useEffect ที่ fetch allDepartments ทำงานก่อน
             }
             if (payload.query_right) {
-              setSelectedRightDepartmentCode(payload.query_right);
-              promises.push(fetchStations(payload.query_right, 'right'));
-              // หาชื่อแผนกจาก code
-              const dept = departments.find((d) => d.code === payload.query_right);
-              if (dept) {
-                setRightDepartmentName(dept.name);
-              }
+              const codes = payload.query_right.split(',').filter(c => c.trim() !== '');
+              setSelectedRightDepartmentCodes(codes);
+              await fetchStationsFromMultipleDepts(codes, 'right');
+              // ถ้า allDepartments ว่าง ให้รอให้ useEffect ที่ fetch allDepartments ทำงานก่อน
             }
-
-            await Promise.all(promises);
           }
         } catch (error) {
           console.error('Error loading data:', error);
@@ -254,7 +266,7 @@ export default function AddScreenModal({
 
       loadAllData();
     } else if (isOpen && currentStep !== 1) {
-      // สำหรับ step อื่นๆ โหลดข้อมูลตามปกติ
+      // สำหรับ step อื่นๆ โหลดข้อมูลตามปกติ (เฉพาะเมื่อเปิด modal หรือเปลี่ยน step เท่านั้น)
       if (payload.station_left) {
         const splitLeft = payload.station_left.split(',');
         const filteredLeft = splitLeft.filter(s => s.trim() !== '');
@@ -266,60 +278,41 @@ export default function AddScreenModal({
         setSelectedRightStations(filteredRight);
       }
       
-      if (payload.type !== 'duo' && payload.query_left) {
-        setSelectedDepartmentCode(payload.query_left);
-        fetchStations(payload.query_left, 'left');
-        const loadDepartmentName = async () => {
-          try {
-            const response = await fetch('/api/department');
-            const data = await response.json();
-            if (data.success && data.data) {
-              const dept = data.data.find((d: { code: string; name: string }) => d.code === payload.query_left);
-              if (dept) {
-                setLeftDepartmentName(dept.name);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching department name:', error);
-          }
-        };
-        loadDepartmentName();
+      // โหลด department codes เฉพาะเมื่อยังไม่มีค่าเท่านั้น (ป้องกันการรีเซ็ตเมื่อเปลี่ยนแผนก)
+      if (payload.type !== 'duo' && payload.query_left && selectedDepartmentCodes.length === 0) {
+        const codes = payload.query_left.split(',').filter(c => c.trim() !== '');
+        setSelectedDepartmentCodes(codes);
+        fetchStationsFromMultipleDepts(codes, 'left');
+        // ใช้ allDepartments ที่มีอยู่แล้วแทนการเรียก API ใหม่
+        if (allDepartments.length > 0) {
+          const selectedDepts = allDepartments.filter((d) => codes.includes(String(d.code)));
+          setLeftDepartmentNames(selectedDepts);
+        }
       }
       
       if (payload.type === 'duo') {
-        const loadDepartmentNames = async () => {
-          let departments: Array<{ code: string; name: string }> = [];
-          try {
-            const response = await fetch('/api/department');
-            const data = await response.json();
-            if (data.success && data.data) {
-              departments = data.data;
-            }
-          } catch (error) {
-            console.error('Error fetching departments:', error);
+        // โหลด department codes เฉพาะเมื่อยังไม่มีค่าเท่านั้น (ป้องกันการรีเซ็ตเมื่อเปลี่ยนแผนก)
+        if (payload.query_left && selectedLeftDepartmentCodes.length === 0) {
+          const codes = payload.query_left.split(',').filter(c => c.trim() !== '');
+          setSelectedLeftDepartmentCodes(codes);
+          fetchStationsFromMultipleDepts(codes, 'left');
+          if (allDepartments.length > 0) {
+            const selectedDepts = allDepartments.filter((d) => codes.includes(String(d.code)));
+            setLeftDepartmentNames(selectedDepts);
           }
-
-          if (payload.query_left) {
-            setSelectedLeftDepartmentCode(payload.query_left);
-            fetchStations(payload.query_left, 'left');
-            const dept = departments.find((d) => d.code === payload.query_left);
-            if (dept) {
-              setLeftDepartmentName(dept.name);
-            }
+        }
+        if (payload.query_right && selectedRightDepartmentCodes.length === 0) {
+          const codes = payload.query_right.split(',').filter(c => c.trim() !== '');
+          setSelectedRightDepartmentCodes(codes);
+          fetchStationsFromMultipleDepts(codes, 'right');
+          if (allDepartments.length > 0) {
+            const selectedDepts = allDepartments.filter((d) => codes.includes(String(d.code)));
+            setRightDepartmentNames(selectedDepts);
           }
-          if (payload.query_right) {
-            setSelectedRightDepartmentCode(payload.query_right);
-            fetchStations(payload.query_right, 'right');
-            const dept = departments.find((d) => d.code === payload.query_right);
-            if (dept) {
-              setRightDepartmentName(dept.name);
-            }
-          }
-        };
-        loadDepartmentNames();
+        }
       }
     }
-  }, [isOpen, currentStep, payload.station_left, payload.station_right, payload.query_left, payload.query_right, payload.type]);
+  }, [isOpen, currentStep, payload.type]); // ลบ payload.query_left และ payload.query_right ออกเพื่อป้องกันการทำงานซ้ำเมื่อเปลี่ยนแผนก (จะจัดการใน useEffect อื่นแล้ว)
 
   const fetchStations = async (departmentCode: string, side: 'left' | 'right' | 'both' = 'both'): Promise<void> => {
     try {
@@ -327,11 +320,17 @@ export default function AddScreenModal({
       const data = await response.json();
       
       if (data.success && data.data) {
+        // เพิ่ม department_code เข้าไปในแต่ละ station
+        const stationsWithDept = data.data.map((station: { station_name: string }) => ({
+          ...station,
+          department_code: departmentCode
+        }));
+        
         if (side === 'left' || side === 'both') {
-          setLeftStations(data.data);
+          setLeftStations(stationsWithDept);
         }
         if (side === 'right' || side === 'both') {
-          setRightStations(data.data);
+          setRightStations(stationsWithDept);
         }
       } else {
         if (side === 'left' || side === 'both') {
@@ -352,29 +351,89 @@ export default function AddScreenModal({
     }
   };
 
+  // ฟังก์ชันสำหรับดึง station จากหลายแผนกและเรียงต่อกัน
+  const fetchStationsFromMultipleDepts = async (departmentCodes: string[], side: 'left' | 'right'): Promise<void> => {
+    try {
+      const allStations: Array<{ station_name: string; department_code: string }> = [];
+      
+      // ดึง station จากทุกแผนก
+      const promises = departmentCodes.map(async (code) => {
+        try {
+          const response = await fetch(`/api/station?department_code=${encodeURIComponent(code)}`);
+          const data = await response.json();
+          if (data.success && data.data) {
+            // เพิ่ม department_code เข้าไปในแต่ละ station
+            return data.data.map((station: { station_name: string }) => ({
+              ...station,
+              department_code: code
+            }));
+          }
+          return [];
+        } catch (error) {
+          console.error(`Error fetching stations for department ${code}:`, error);
+          return [];
+        }
+      });
+
+      const results = await Promise.all(promises);
+      
+      // รวม station ทั้งหมดและเรียงต่อกัน (จัดกลุ่มตามแผนก)
+      results.forEach(stations => {
+        allStations.push(...stations);
+      });
+
+      // ตั้งค่า stations
+      if (side === 'left') {
+        setLeftStations(allStations);
+      } else {
+        setRightStations(allStations);
+      }
+    } catch (error) {
+      console.error('Error fetching stations from multiple departments:', error);
+      if (side === 'left') {
+        setLeftStations([]);
+      } else {
+        setRightStations([]);
+      }
+    }
+  };
+
   // อัปเดต station_left และ amount_left เมื่อเลือก checkbox
   useEffect(() => {
     const filteredStations = selectedLeftStations.filter(s => s && s.trim() !== '');
     const stationValue = filteredStations.length > 0 ? filteredStations.join(',') : '';
-    setPayload(prev => ({ 
-      ...prev, 
-      station_left: stationValue,
-      amount_left: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
-    }));
+    console.log('[Station Update] selectedLeftStations:', selectedLeftStations);
+    console.log('[Station Update] filteredStations:', filteredStations);
+    console.log('[Station Update] stationValue:', stationValue);
+    setPayload(prev => {
+      const newPayload = {
+        ...prev, 
+        station_left: stationValue,
+        amount_left: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
+      };
+      console.log('[Station Update] Updating payload.station_left:', newPayload.station_left);
+      return newPayload;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLeftStations]);
+  }, [selectedLeftStations]); // setPayload is stable from props, no need in deps
 
   // อัปเดต station_right และ amount_right เมื่อเลือก checkbox
   useEffect(() => {
     const filteredStations = selectedRightStations.filter(s => s && s.trim() !== '');
     const stationValue = filteredStations.length > 0 ? filteredStations.join(',') : '';
-    setPayload(prev => ({ 
-      ...prev, 
-      station_right: stationValue,
-      amount_right: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
-    }));
+    console.log('[Station Update] selectedRightStations:', selectedRightStations);
+    console.log('[Station Update] stationValue (right):', stationValue);
+    setPayload(prev => {
+      const newPayload = {
+        ...prev, 
+        station_right: stationValue,
+        amount_right: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
+      };
+      console.log('[Station Update] Updating payload.station_right:', newPayload.station_right);
+      return newPayload;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRightStations]);
+  }, [selectedRightStations]); // setPayload is stable from props, no need in deps
 
   const handleLeftStationToggle = (stationName: string) => {
     setSelectedLeftStations(prev => {
@@ -473,7 +532,6 @@ export default function AddScreenModal({
                     >
                       <option value="single">Single</option>
                       <option value="duo">Duo</option>
-                      <option value="swap">Swap</option>
                       <option value="er">ER</option>
                     </select>
                   </div>
@@ -554,12 +612,43 @@ export default function AddScreenModal({
                       {payload.type !== 'duo' && (
                         <div className="mt-4">
                           <label className="block text-sm font-medium text-slate-700 mb-2">แผนก</label>
+                          {/* Selected Departments Tags */}
+                          {leftDepartmentNames.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {leftDepartmentNames.map((dept) => (
+                                <span
+                                  key={dept.code}
+                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+                                  style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
+                                >
+                                  {dept.name}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newCodes = selectedDepartmentCodes.filter(c => c !== String(dept.code));
+                                      setSelectedDepartmentCodes(newCodes);
+                                      // อัปเดต query_left ทันที
+                                      setPayload(prev => ({ 
+                                        ...prev, 
+                                        query_left: newCodes.length > 0 ? newCodes.join(',') : ''
+                                      }));
+                                    }}
+                                    className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={() => setShowDepartmentPopup(true)}
                             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-left bg-white hover:bg-slate-50"
                           >
-                            {leftDepartmentName || 'เลือกแผนก'}
+                            {leftDepartmentNames.length > 0 
+                              ? `เลือกแล้ว ${leftDepartmentNames.length} แผนก` 
+                              : 'เลือกแผนก'}
                           </button>
                         </div>
                       )}
@@ -568,12 +657,43 @@ export default function AddScreenModal({
                       {payload.type === 'duo' && (
                         <div className="mt-4">
                           <label className="block text-sm font-medium text-slate-700 mb-2">แผนก (ซ้าย)</label>
+                          {/* Selected Departments Tags */}
+                          {leftDepartmentNames.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {leftDepartmentNames.map((dept) => (
+                                <span
+                                  key={dept.code}
+                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+                                  style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
+                                >
+                                  {dept.name}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newCodes = selectedLeftDepartmentCodes.filter(c => c !== String(dept.code));
+                                      setSelectedLeftDepartmentCodes(newCodes);
+                                      // อัปเดต query_left ทันที
+                                      setPayload(prev => ({ 
+                                        ...prev, 
+                                        query_left: newCodes.length > 0 ? newCodes.join(',') : ''
+                                      }));
+                                    }}
+                                    className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={() => setShowLeftDepartmentPopup(true)}
                             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-left bg-white hover:bg-slate-50"
                           >
-                            {leftDepartmentName || 'เลือกแผนก'}
+                            {leftDepartmentNames.length > 0 
+                              ? `เลือกแล้ว ${leftDepartmentNames.length} แผนก` 
+                              : 'เลือกแผนก'}
                           </button>
                         </div>
                       )}
@@ -583,7 +703,7 @@ export default function AddScreenModal({
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                           เลือก Station (ซ้าย)
                         </label>
-                        {!leftDepartmentName && !selectedLeftDepartmentCode ? (
+                        {leftDepartmentNames.length === 0 && selectedDepartmentCodes.length === 0 && selectedLeftDepartmentCodes.length === 0 ? (
                           <div className="text-center py-8 text-slate-400 text-sm border border-slate-200 rounded-lg bg-slate-50">
                             <div className="flex flex-col items-center space-y-2">
                               <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center">
@@ -603,23 +723,60 @@ export default function AddScreenModal({
                           </div>
                         ) : (
                           <div className="space-y-2 max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-white">
-                            {leftStations.map((station) => {
-                              const isSelected = selectedLeftStations.includes(station.station_name);
-                              return (
-                                <label
-                                  key={station.station_name}
-                                  className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => handleLeftStationToggle(station.station_name)}
-                                    className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
-                                  />
-                                  <span className="text-sm text-slate-700">{station.station_name}</span>
-                                </label>
-                              );
-                            })}
+                            {(() => {
+                              // จัดกลุ่ม stations ตามแผนก
+                              const stationsByDept = leftStations.reduce((acc, station) => {
+                                const deptCode = station.department_code;
+                                if (!acc[deptCode]) {
+                                  acc[deptCode] = [];
+                                }
+                                acc[deptCode].push(station);
+                                return acc;
+                              }, {} as Record<string, Array<{ station_name: string; department_code: string }>>);
+
+                              // หาชื่อแผนกจาก department codes
+                              const deptCodes = Object.keys(stationsByDept);
+                              // ใช้ leftDepartmentNames ที่โหลดไว้แล้ว หรือ allDepartments เป็น fallback
+                              const deptNamesSource = leftDepartmentNames.length > 0 ? leftDepartmentNames : allDepartments;
+                              
+                              return deptCodes.map((deptCode) => {
+                                const stations = stationsByDept[deptCode];
+                                // Normalize type เพื่อให้ match ถูกต้อง
+                                const dept = deptNamesSource.find(d => String(d.code) === String(deptCode));
+                                const deptName = dept ? dept.name : `แผนก ${deptCode}`;
+                                
+                                return (
+                                  <div key={deptCode} className="mb-4 last:mb-0">
+                                    {/* Label แสดงชื่อแผนก */}
+                                    {deptCodes.length > 1 && (
+                                      <div className="mb-2 px-2 py-1 bg-slate-100 rounded-md">
+                                        <span className="text-xs font-semibold text-slate-600">{deptName}</span>
+                                      </div>
+                                    )}
+                                    {/* Stations ของแผนกนี้ */}
+                                    <div className="space-y-1">
+                                      {stations.map((station, index) => {
+                                        const isSelected = selectedLeftStations.includes(station.station_name);
+                                        return (
+                                          <label
+                                            key={`left-station-${deptCode}-${index}-${station.station_name}`}
+                                            className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={isSelected}
+                                              onChange={() => handleLeftStationToggle(station.station_name)}
+                                              className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
+                                            />
+                                            <span className="text-sm text-slate-700">{station.station_name}</span>
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              });
+                            })()}
                           </div>
                         )}
                       </div>
@@ -655,12 +812,43 @@ export default function AddScreenModal({
                         {/* Department Selection สำหรับ duo ฝั่งขวา */}
                         <div className="mt-4">
                           <label className="block text-sm font-medium text-slate-700 mb-2">แผนก (ขวา)</label>
+                          {/* Selected Departments Tags */}
+                          {rightDepartmentNames.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {rightDepartmentNames.map((dept) => (
+                                <span
+                                  key={dept.code}
+                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+                                  style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
+                                >
+                                  {dept.name}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newCodes = selectedRightDepartmentCodes.filter(c => c !== String(dept.code));
+                                      setSelectedRightDepartmentCodes(newCodes);
+                                      // อัปเดต query_right ทันที
+                                      setPayload(prev => ({ 
+                                        ...prev, 
+                                        query_right: newCodes.length > 0 ? newCodes.join(',') : ''
+                                      }));
+                                    }}
+                                    className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={() => setShowRightDepartmentPopup(true)}
                             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-left bg-white hover:bg-slate-50"
                           >
-                            {rightDepartmentName || 'เลือกแผนก'}
+                            {rightDepartmentNames.length > 0 
+                              ? `เลือกแล้ว ${rightDepartmentNames.length} แผนก` 
+                              : 'เลือกแผนก'}
                           </button>
                         </div>
 
@@ -669,7 +857,7 @@ export default function AddScreenModal({
                           <label className="block text-sm font-medium text-slate-700 mb-2">
                             เลือก Station (ขวา)
                           </label>
-                          {!rightDepartmentName ? (
+                          {rightDepartmentNames.length === 0 ? (
                             <div className="text-center py-8 text-slate-400 text-sm border border-slate-200 rounded-lg bg-slate-50">
                               <div className="flex flex-col items-center space-y-2">
                                 <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center">
@@ -689,23 +877,60 @@ export default function AddScreenModal({
                             </div>
                           ) : (
                             <div className="space-y-2 max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-white">
-                              {rightStations.map((station) => {
-                                const isSelected = selectedRightStations.includes(station.station_name);
-                                return (
-                                  <label
-                                    key={station.station_name}
-                                    className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={() => handleRightStationToggle(station.station_name)}
-                                      className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
-                                    />
-                                    <span className="text-sm text-slate-700">{station.station_name}</span>
-                                  </label>
-                                );
-                              })}
+                              {(() => {
+                                // จัดกลุ่ม stations ตามแผนก
+                                const stationsByDept = rightStations.reduce((acc, station) => {
+                                  const deptCode = station.department_code;
+                                  if (!acc[deptCode]) {
+                                    acc[deptCode] = [];
+                                  }
+                                  acc[deptCode].push(station);
+                                  return acc;
+                                }, {} as Record<string, Array<{ station_name: string; department_code: string }>>);
+
+                                // หาชื่อแผนกจาก department codes
+                                const deptCodes = Object.keys(stationsByDept);
+                                // ใช้ rightDepartmentNames ที่โหลดไว้แล้ว หรือ allDepartments เป็น fallback
+                                const deptNamesSource = rightDepartmentNames.length > 0 ? rightDepartmentNames : allDepartments;
+                                
+                                return deptCodes.map((deptCode) => {
+                                  const stations = stationsByDept[deptCode];
+                                  // Normalize type เพื่อให้ match ถูกต้อง
+                                  const dept = deptNamesSource.find(d => String(d.code) === String(deptCode));
+                                  const deptName = dept ? dept.name : `แผนก ${deptCode}`;
+                                  
+                                  return (
+                                    <div key={deptCode} className="mb-4 last:mb-0">
+                                      {/* Label แสดงชื่อแผนก */}
+                                      {deptCodes.length > 1 && (
+                                        <div className="mb-2 px-2 py-1 bg-slate-100 rounded-md">
+                                          <span className="text-xs font-semibold text-slate-600">{deptName}</span>
+                                        </div>
+                                      )}
+                                      {/* Stations ของแผนกนี้ */}
+                                      <div className="space-y-1">
+                                        {stations.map((station, index) => {
+                                          const isSelected = selectedRightStations.includes(station.station_name);
+                                          return (
+                                            <label
+                                              key={`right-station-${deptCode}-${index}-${station.station_name}`}
+                                              className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
+                                            >
+                                              <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => handleRightStationToggle(station.station_name)}
+                                                className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
+                                              />
+                                              <span className="text-sm text-slate-700">{station.station_name}</span>
+                                            </label>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                });
+                              })()}
                             </div>
                           )}
                         </div>
@@ -1126,12 +1351,21 @@ export default function AddScreenModal({
         <DepartmentSelectPopup
           isOpen={showDepartmentPopup}
           onClose={() => setShowDepartmentPopup(false)}
-          onSelect={(departmentCode: string, departmentName: string) => {
-            setSelectedDepartmentCode(departmentCode);
-            setLeftDepartmentName(departmentName);
+          onSelect={() => {
+            // Not used in multiSelect mode, but required by component
+          }}
+          onMultiSelect={(selectedCodes: string[], selectedNames: string[]) => {
+            setSelectedDepartmentCodes(selectedCodes);
+            // ใช้ selectedNames ที่ส่งมาจาก popup แทนการค้นหาจาก allDepartments
+            const selectedDepts = selectedCodes.map((code, index) => ({
+              code,
+              name: selectedNames[index] || code
+            }));
+            setLeftDepartmentNames(selectedDepts);
             setShowDepartmentPopup(false);
           }}
-          currentValue={leftDepartmentName}
+          selectedValues={selectedDepartmentCodes}
+          multiSelect={true}
         />
       )}
 
@@ -1140,12 +1374,21 @@ export default function AddScreenModal({
         <DepartmentSelectPopup
           isOpen={showLeftDepartmentPopup}
           onClose={() => setShowLeftDepartmentPopup(false)}
-          onSelect={(departmentCode: string, departmentName: string) => {
-            setSelectedLeftDepartmentCode(departmentCode);
-            setLeftDepartmentName(departmentName);
+          onSelect={() => {
+            // Not used in multiSelect mode, but required by component
+          }}
+          onMultiSelect={(selectedCodes: string[], selectedNames: string[]) => {
+            setSelectedLeftDepartmentCodes(selectedCodes);
+            // ใช้ selectedNames ที่ส่งมาจาก popup แทนการค้นหาจาก allDepartments
+            const selectedDepts = selectedCodes.map((code, index) => ({
+              code,
+              name: selectedNames[index] || code
+            }));
+            setLeftDepartmentNames(selectedDepts);
             setShowLeftDepartmentPopup(false);
           }}
-          currentValue={leftDepartmentName}
+          selectedValues={selectedLeftDepartmentCodes}
+          multiSelect={true}
         />
       )}
 
@@ -1154,12 +1397,21 @@ export default function AddScreenModal({
         <DepartmentSelectPopup
           isOpen={showRightDepartmentPopup}
           onClose={() => setShowRightDepartmentPopup(false)}
-          onSelect={(departmentCode: string, departmentName: string) => {
-            setSelectedRightDepartmentCode(departmentCode);
-            setRightDepartmentName(departmentName);
+          onSelect={() => {
+            // Not used in multiSelect mode, but required by component
+          }}
+          onMultiSelect={(selectedCodes: string[], selectedNames: string[]) => {
+            setSelectedRightDepartmentCodes(selectedCodes);
+            // ใช้ selectedNames ที่ส่งมาจาก popup แทนการค้นหาจาก allDepartments
+            const selectedDepts = selectedCodes.map((code, index) => ({
+              code,
+              name: selectedNames[index] || code
+            }));
+            setRightDepartmentNames(selectedDepts);
             setShowRightDepartmentPopup(false);
           }}
-          currentValue={rightDepartmentName}
+          selectedValues={selectedRightDepartmentCodes}
+          multiSelect={true}
         />
       )}
 
@@ -1168,11 +1420,16 @@ export default function AddScreenModal({
         isOpen={showLeftStationPopup}
         onClose={() => setShowLeftStationPopup(false)}
         onSelect={(selectedStations: string[]) => {
-          setSelectedLeftStations(selectedStations);
+          console.log('[Station Select] onSelect called with:', selectedStations);
+          console.log('[Station Select] Setting selectedLeftStations to:', selectedStations);
+      setSelectedLeftStations(selectedStations);
+      console.log('[Station Select] selectedLeftStations state will be updated');
         }}
         availableStations={leftStations}
         selectedStations={selectedLeftStations}
-        departmentName={payload.type === 'duo' ? leftDepartmentName : leftDepartmentName}
+        departmentName={leftDepartmentNames.length > 0 
+          ? leftDepartmentNames.map(d => d.name).join(', ')
+          : undefined}
       />
 
       {/* Station Selection Popup ฝั่งขวา */}
@@ -1181,11 +1438,14 @@ export default function AddScreenModal({
           isOpen={showRightStationPopup}
           onClose={() => setShowRightStationPopup(false)}
           onSelect={(selectedStations: string[]) => {
+            console.log('[Station Select] onSelect (right) called with:', selectedStations);
             setSelectedRightStations(selectedStations);
           }}
           availableStations={rightStations}
           selectedStations={selectedRightStations}
-          departmentName={rightDepartmentName}
+          departmentName={rightDepartmentNames.length > 0 
+            ? rightDepartmentNames.map(d => d.name).join(', ')
+            : undefined}
         />
       )}
     </>

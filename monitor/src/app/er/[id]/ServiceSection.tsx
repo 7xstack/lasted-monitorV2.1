@@ -7,9 +7,10 @@ interface ServiceSectionProps {
   activeData: VisitInfo[];
   urgentLevels: UrgentLevel[];
   countData: { [key: string]: number };
+  hideNumber?: boolean;
 }
 
-export default function ServiceSection({ setting, activeData, urgentLevels, countData }: ServiceSectionProps) {
+export default function ServiceSection({ setting, activeData, urgentLevels, countData, hideNumber }: ServiceSectionProps) {
   // Find active patient for a station
   const findActivePatient = (stationName: string, letter?: string) => {
     return activeData.find(visit => {
@@ -51,6 +52,7 @@ export default function ServiceSection({ setting, activeData, urgentLevels, coun
             activePatient={activePatient}
             color={color}
             count={countData[letter]}
+            hideNumber={hideNumber}
           />
         );
       });
