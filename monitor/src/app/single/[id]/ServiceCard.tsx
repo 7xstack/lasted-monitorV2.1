@@ -54,7 +54,7 @@ export default function ServiceCard({
         {!hideNumber && activePatient && (
           <div className={styles.queueNumberSplit}>
             <span className={styles.queueNumber}>
-              {splitQueueNumber(String(activePatient.visit_q_no || "")).number}
+              {activePatient.visit_q_no || ""}
             </span>
           </div>
         )}

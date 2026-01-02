@@ -105,6 +105,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
   const [rightStations, setRightStations] = useState<Array<{ station_name: string; department_code: string }>>([]);
   const [selectedLeftStations, setSelectedLeftStations] = useState<string[]>([]);
   const [selectedRightStations, setSelectedRightStations] = useState<string[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const defaultHospitalName = process.env.NEXT_PUBLIC_HOSPITAL_NAME || 'โรงพยาบาล';
   
@@ -491,6 +492,8 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
         setShowErrorPopup(true);
       } finally {
         setIsFetching(false);
+        // ตั้งค่า isInitialLoad เป็น false หลังจากโหลดข้อมูลเสร็จ
+        setIsInitialLoad(false);
       }
     };
 
@@ -631,6 +634,9 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
   // เมื่อเลือกแผนกแล้ว ให้ดึง station และตั้งค่า Department ID (ทุก type ยกเว้น duo)
   useEffect(() => {
+    // ไม่ reset stations เมื่อโหลดข้อมูลครั้งแรก
+    if (isInitialLoad) return;
+    
     if (payload.type !== 'duo' && selectedDepartmentCodes.length > 0) {
       fetchStationsFromMultipleDepts(selectedDepartmentCodes, 'left');
       // Reset selected stations เมื่อเปลี่ยนแผนก (useEffect ที่ watch selectedLeftStations จะอัพเดต station_left อัตโนมัติ)
@@ -640,10 +646,13 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
       setSelectedLeftStations([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDepartmentCodes, payload.type]);
+  }, [selectedDepartmentCodes, payload.type, isInitialLoad]);
 
   // สำหรับ duo: เมื่อเลือกแผนกฝั่งซ้าย
   useEffect(() => {
+    // ไม่ reset stations เมื่อโหลดข้อมูลครั้งแรก
+    if (isInitialLoad) return;
+    
     if (payload.type === 'duo' && selectedLeftDepartmentCodes.length > 0) {
       fetchStationsFromMultipleDepts(selectedLeftDepartmentCodes, 'left');
       setSelectedLeftStations([]);
@@ -652,10 +661,13 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
       setSelectedLeftStations([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedLeftDepartmentCodes, payload.type]);
+  }, [selectedLeftDepartmentCodes, payload.type, isInitialLoad]);
 
   // สำหรับ duo: เมื่อเลือกแผนกฝั่งขวา
   useEffect(() => {
+    // ไม่ reset stations เมื่อโหลดข้อมูลครั้งแรก
+    if (isInitialLoad) return;
+    
     if (payload.type === 'duo' && selectedRightDepartmentCodes.length > 0) {
       fetchStationsFromMultipleDepts(selectedRightDepartmentCodes, 'right');
       setSelectedRightStations([]);
@@ -664,7 +676,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
       setSelectedRightStations([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedRightDepartmentCodes, payload.type]);
+  }, [selectedRightDepartmentCodes, payload.type, isInitialLoad]);
 
   // อัปเดต station_left เมื่อเลือก checkbox
   useEffect(() => {
@@ -1564,6 +1576,24 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                         </div>
                       )}
                     </div>
+
+                    {/* Department ID Display */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Department ID {payload.type === 'duo' ? '(ซ้าย) - department_load' : ''}
+                      </label>
+                      <input
+                        type="text"
+                        value={payload.query_left}
+                        readOnly
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 cursor-not-allowed"
+                        placeholder="จะถูกตั้งค่าอัตโนมัติจากแผนกที่เลือก"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Department ID จะถูกตั้งค่าอัตโนมัติจาก code ของแผนกที่เลือก
+                        {payload.type === 'duo' && ' (department_load)'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -1733,6 +1763,19 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                             })()}
                           </div>
                         )}
+                      </div>
+
+                      {/* Department ID Display สำหรับ duo ฝั่งขวา */}
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Department ID (ขวา) - department_room_load</label>
+                        <input
+                          type="text"
+                          value={payload.query_right}
+                          readOnly
+                          className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 cursor-not-allowed"
+                          placeholder="จะถูกตั้งค่าอัตโนมัติจากแผนกที่เลือก"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Department ID จะถูกตั้งค่าอัตโนมัติจาก code ของแผนกที่เลือก (department_room_load)</p>
                       </div>
                     </div>
                   </div>

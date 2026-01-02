@@ -60,7 +60,7 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
                       >
                         <div className={styles.queueNumberSplit}>
                           <span className={styles.queueNumber}>
-                            {splitQueueNumber(String(queue.visit_q_no || "")).number}
+                            {queue.visit_q_no || ""}
                           </span>
                         </div>
                       </div>
@@ -166,7 +166,7 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
                           : '#0c266d' 
                       }}
                     >
-                      {splitQueueNumber(String(visit.visit_q_no || "")).number}
+                      {visit.visit_q_no || ""}
                     </span>
                   </div>
                 </td>

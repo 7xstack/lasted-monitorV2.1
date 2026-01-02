@@ -60,7 +60,7 @@ export default function ServiceCard({ setting, stationName, activePatient, color
               className={styles.queueNumberSplit}
             >
               <span className={styles.queueNumber}>
-                {splitQueueNumber(String(activePatient.visit_q_no || '')).number}
+                {activePatient.visit_q_no || ''}
               </span>
             </div>
           ) : (
