@@ -314,6 +314,32 @@ export default function AddScreenModal({
     }
   }, [isOpen, currentStep, payload.type]); // ลบ payload.query_left และ payload.query_right ออกเพื่อป้องกันการทำงานซ้ำเมื่อเปลี่ยนแผนก (จะจัดการใน useEffect อื่นแล้ว)
 
+  // Auto-select departments 38, 39 เมื่อ type เป็น drug
+  useEffect(() => {
+    if (payload.type === 'drug') {
+      const drugDepartments = ['38', '39'];
+      // ตรวจสอบว่ามีการเลือกแผนกแล้วหรือยัง และแผนกที่เลือกตรงกับ 38, 39 หรือไม่
+      const isAlreadySet = selectedDepartmentCodes.length === 2 && 
+        selectedDepartmentCodes.every(code => drugDepartments.includes(code)) &&
+        drugDepartments.every(code => selectedDepartmentCodes.includes(code));
+      
+      if (!isAlreadySet) {
+        setSelectedDepartmentCodes(drugDepartments);
+        
+        // Set department names
+        if (allDepartments.length > 0) {
+          const selectedDepts = allDepartments.filter(dept => 
+            drugDepartments.includes(String(dept.code))
+          );
+          setLeftDepartmentNames(selectedDepts);
+        }
+        
+        // Fetch stations
+        fetchStationsFromMultipleDepts(drugDepartments, 'left');
+      }
+    }
+  }, [payload.type, allDepartments, selectedDepartmentCodes]);
+
   const fetchStations = async (departmentCode: string, side: 'left' | 'right' | 'both' = 'both'): Promise<void> => {
     try {
       const response = await fetch(`/api/station?department_code=${encodeURIComponent(departmentCode)}`);
@@ -533,6 +559,10 @@ export default function AddScreenModal({
                       <option value="single">Single</option>
                       <option value="duo">Duo</option>
                       <option value="er">ER</option>
+                      <option value="pharmacy">Pharmacy</option>
+                      <option value="queue">Queue</option>
+                      <option value="queue_only">Queue Only</option>
+                      <option value="drug">Drug</option>
                     </select>
                   </div>
 
@@ -557,15 +587,17 @@ export default function AddScreenModal({
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
-                    <input
-                      type="text"
-                      value={payload.head_left}
-                      onChange={(e) => setPayload(prev => ({ ...prev, head_left: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-                    />
-                  </div>
+                  {payload.type !== 'drug' && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
+                      <input
+                        type="text"
+                        value={payload.head_left}
+                        onChange={(e) => setPayload(prev => ({ ...prev, head_left: e.target.value }))}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                      />
+                    </div>
+                  )}
 
                   {payload.type === 'duo' && (
                     <div>
@@ -1366,6 +1398,7 @@ export default function AddScreenModal({
           }}
           selectedValues={selectedDepartmentCodes}
           multiSelect={true}
+          allowedDepartments={payload.type === 'drug' ? ['38', '39'] : undefined}
         />
       )}
 

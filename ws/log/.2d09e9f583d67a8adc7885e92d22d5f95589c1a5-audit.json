@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/basspola/code/Hospital/last hospital/lasted-monitorV2.1/ws/log/.2d09e9f583d67a8adc7885e92d22d5f95589c1a5-audit.json",
+    "files": [
+        {
+            "date": 1767439908892,
+            "name": "/Users/basspola/code/Hospital/last hospital/lasted-monitorV2.1/ws/log/error-2026-01-03.log",
+            "hash": "5e2675d37fcc5d11ce28e92d3b64042542fc3d58202780d5284121bbd1be3ab9"
+        }
+    ],
+    "hashType": "sha256"
+}

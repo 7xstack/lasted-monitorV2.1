@@ -124,19 +124,19 @@ export default function PreviewDuoPage() {
   return (
     <div className={styles.container} style={{ fontFamily }}>
       <div className={isTransitioning ? styles.fadeOut : styles.fadeIn}>
-        <Header setting={mockSetting} />
-        <main className={styles.mainContent}>
-          <div className={styles.column}>
+      <Header setting={mockSetting} />
+      <main className={styles.mainContent}>
+        <div className={styles.column}>
             <InterviewTable setting={mockSetting} visitData={currentVisitLeft} />
             <ServiceSection setting={mockSetting} sortedActiveData={currentActiveLeft} tableNames={tableNamesLeft} hideNumber={true} />
-          </div>
-          <div className={styles.column}>
+        </div>
+        <div className={styles.column}>
             <InterviewTableRight setting={mockSetting} visitData={currentVisitRight} />
             <ServiceSection setting={mockSetting} sortedActiveData={currentActiveRight} tableNames={tableNamesRight} isRight={true} hideNumber={true} />
-          </div>
-        </main>
+        </div>
+      </main>
         <SkippedQueueBar skippedData={[]} setting={mockSetting} />
-      </div>
+          </div>
     </div>
   );
 }

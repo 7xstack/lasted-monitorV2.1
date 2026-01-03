@@ -147,17 +147,17 @@ export default function PreviewSinglePage({ pageId }: PreviewSinglePageProps = {
     <div className={styles.container} style={{ fontFamily }}>
       <div className={isTransitioning ? styles.fadeOut : styles.fadeIn}>
         <Header setting={currentSetting} />
-        <main className={styles.mainContent}>
+      <main className={styles.mainContent}>
           <InterviewTable setting={currentSetting} visitData={currentVisitData} />
-          <ServiceSection
+        <ServiceSection
             setting={currentSetting}
             sortedActiveData={currentActiveData}
-            tableNames={tableNames}
+          tableNames={tableNames}
             hideNumber={true}
           />
-        </main>
+      </main>
         <SkippedQueueBar skippedData={[]} setting={currentSetting} />
-      </div>
+          </div>
     </div>
   );
 }

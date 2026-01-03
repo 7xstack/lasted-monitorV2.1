@@ -20,6 +20,7 @@ interface DepartmentSelectPopupProps {
   currentValue?: string;
   selectedValues?: string[];
   multiSelect?: boolean;
+  allowedDepartments?: string[]; // ล็อคให้เลือกเฉพาะ departments เหล่านี้
 }
 
 export default function DepartmentSelectPopup({
@@ -29,6 +30,7 @@ export default function DepartmentSelectPopup({
   onMultiSelect,
   selectedValues = [],
   multiSelect = false,
+  allowedDepartments,
 }: DepartmentSelectPopupProps) {
   // Initialize from cache if available
   const [departments, setDepartments] = useState<Department[]>(cachedDepartments);
@@ -129,6 +131,15 @@ export default function DepartmentSelectPopup({
   };
 
   const filteredDepartments = departments.filter((dept) => {
+    // Filter by allowedDepartments first (if provided)
+    if (allowedDepartments && allowedDepartments.length > 0) {
+      const normalizedCode = String(dept.code);
+      if (!allowedDepartments.includes(normalizedCode)) {
+        return false;
+      }
+    }
+    
+    // Then filter by search
     const searchLower = departmentSearch.toLowerCase();
     const codeStr = String(dept.code || '').toLowerCase();
     const nameStr = String(dept.name || '').toLowerCase();

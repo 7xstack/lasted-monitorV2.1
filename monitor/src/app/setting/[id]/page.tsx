@@ -584,6 +584,29 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDepartmentCodes, payload.type]);
 
+  // Auto-select departments 38, 39 เมื่อ type เป็น drug
+  useEffect(() => {
+    if (payload.type === 'drug') {
+      const drugDepartments = ['38', '39'];
+      // ตรวจสอบว่ามีการเลือกแผนกแล้วหรือยัง และแผนกที่เลือกตรงกับ 38, 39 หรือไม่
+      const isAlreadySet = selectedDepartmentCodes.length === 2 && 
+        selectedDepartmentCodes.every(code => drugDepartments.includes(code)) &&
+        drugDepartments.every(code => selectedDepartmentCodes.includes(code));
+      
+      if (!isAlreadySet) {
+        setSelectedDepartmentCodes(drugDepartments);
+        
+        // Set department names
+        if (allDepartments.length > 0) {
+          const selectedDepts = allDepartments.filter(dept => 
+            drugDepartments.includes(String(dept.code))
+          );
+          setLeftDepartmentNames(selectedDepts);
+        }
+      }
+    }
+  }, [payload.type, allDepartments, selectedDepartmentCodes]);
+
   // Sync selectedLeftDepartmentCodes กับ payload.query_left สำหรับ duo
   useEffect(() => {
     if (payload.type === 'duo' && selectedLeftDepartmentCodes.length > 0) {
@@ -758,7 +781,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
     setSelectedLeftStations(prev => {
       if (prev.includes(stationName)) {
         return prev.filter(s => s !== stationName);
-      } else {
+    } else {
         return [...prev, stationName];
       }
     });
@@ -1238,6 +1261,14 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                       <SelectItem value="duo">Duo</SelectItem>
                       <SelectSeparator />
                       <SelectItem value="er">ER</SelectItem>
+                      <SelectSeparator />
+                      <SelectItem value="pharmacy">pharmacy</SelectItem>
+                      <SelectSeparator />
+                      <SelectItem value="queue">queue</SelectItem>
+                      <SelectSeparator />
+                      <SelectItem value="queue_only">queue_only</SelectItem>
+                      <SelectSeparator />
+                      <SelectItem value="drug">drug</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1361,6 +1392,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                   />
                 </div>
 
+                {payload.type !== 'drug' && (
                 <div>
                   <label className="block text-md font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
                   <input
@@ -1371,6 +1403,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                     style={{ borderColor: '#e2e8f0' }}
                   />
                 </div>
+                )}
 
                 {payload.type === 'duo' && (
                   <div>
@@ -1421,16 +1454,16 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                         </label>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                           {leftRooms.slice(0, payload.amount_left).map((room, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
-                              <input
-                                type="text"
-                                value={room}
-                                onChange={(e) => handleLeftRoomChange(index, e.target.value)}
+                              <div key={index} className="flex items-center space-x-2">
+                                <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
+                                  <input
+                                    type="text"
+                                    value={room}
+                                    onChange={(e) => handleLeftRoomChange(index, e.target.value)}
                                 className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-sm mt-1"
-                                placeholder={`ห้อง ${index + 1}`}
-                              />
-                            </div>
+                                    placeholder={`ห้อง ${index + 1}`}
+                                  />
+                                </div>
                           ))}
                         </div>
                       </div>
@@ -1438,18 +1471,18 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-slate-700 mb-2">{payload.type === 'duo' ? 'แผนก (ซ้าย)' : 'แผนก'}</label>
-                      {/* Selected Departments Tags */}
+                        {/* Selected Departments Tags */}
                       {leftDepartmentNames.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-2">
+                          <div className="flex flex-wrap gap-2 mb-2">
                           {leftDepartmentNames.map((dept) => (
-                            <span
+                                <span
                               key={dept.code}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
-                              style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
-                            >
+                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+                                  style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
+                                >
                               {dept.name}
-                              <button
-                                type="button"
+                                  <button
+                                    type="button"
                                 onClick={() => {
                                   if (payload.type === 'duo') {
                                     const newCodes = selectedLeftDepartmentCodes.filter(c => c !== String(dept.code));
@@ -1469,17 +1502,17 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                                     }));
                                   }
                                 }}
-                                className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
-                              >
+                                    className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                  >
                                 <X className="w-3 h-3" />
-                              </button>
-                            </span>
+                                  </button>
+                                </span>
                           ))}
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
                           if (payload.type === 'duo') {
                             setShowLeftDepartmentPopup(true);
                           } else {
@@ -1491,7 +1524,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                         {leftDepartmentNames.length > 0 
                           ? `เลือกแล้ว ${leftDepartmentNames.length} แผนก` 
                           : 'เลือกแผนก'}
-                      </button>
+                        </button>
                     </div>
 
                     {/* Station Selection */}
@@ -1504,9 +1537,9 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                           <div className="flex flex-col items-center space-y-2">
                             <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center">
                               <Plus className="w-6 h-6 text-slate-400" />
-                            </div>
+                              </div>
                             <span>กรุณาเลือกแผนกก่อน</span>
-                          </div>
+                            </div>
                         </div>
                       ) : leftStations.length === 0 ? (
                         <div className="text-center py-8 text-slate-400 text-sm border border-slate-200 rounded-lg bg-slate-50">
@@ -1541,7 +1574,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                               const dept = deptNamesSource.find(d => String(d.code) === String(deptCode));
                               const deptName = dept ? dept.name : `แผนก ${deptCode}`;
                               
-                              return (
+                                    return (
                                 <div key={deptCode} className="mb-4 last:mb-0">
                                   {/* Label แสดงชื่อแผนก */}
                                   {deptCodes.length > 1 && (
@@ -1568,14 +1601,14 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                                         </label>
                                       );
                                     })}
-                                  </div>
-                                </div>
-                              );
+                                        </div>
+                                        </div>
+                                    );
                             });
                           })()}
-                        </div>
-                      )}
-                    </div>
+                          </div>
+                        )}
+                      </div>
 
                     {/* Department ID Display */}
                     <div className="mt-4">
@@ -1625,16 +1658,16 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                           </label>
                           <div className="space-y-2 max-h-60 overflow-y-auto">
                             {rightRooms.slice(0, payload.amount_right).map((room, index) => (
-                              <div key={index} className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
-                                <input
-                                  type="text"
-                                  value={room}
-                                  onChange={(e) => handleRightRoomChange(index, e.target.value)}
+                                <div key={index} className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
+                                    <input
+                                      type="text"
+                                      value={room}
+                                      onChange={(e) => handleRightRoomChange(index, e.target.value)}
                                   className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-sm"
-                                  placeholder={`ห้อง ${index + 1}`}
-                                />
-                              </div>
+                                      placeholder={`ห้อง ${index + 1}`}
+                                    />
+                                  </div>
                             ))}
                           </div>
                         </div>
@@ -1642,18 +1675,18 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
 
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-2">แผนก (ขวา)</label>
-                        {/* Selected Departments Tags */}
+                          {/* Selected Departments Tags */}
                         {rightDepartmentNames.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-2">
+                            <div className="flex flex-wrap gap-2 mb-2">
                             {rightDepartmentNames.map((dept) => (
-                              <span
+                                  <span
                                 key={dept.code}
-                                className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
-                                style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
-                              >
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+                                    style={{ background: 'rgba(4,53,102,0.1)', color: '#043566' }}
+                                  >
                                 {dept.name}
-                                <button
-                                  type="button"
+                                    <button
+                                      type="button"
                                   onClick={() => {
                                     const newCodes = selectedRightDepartmentCodes.filter(c => c !== String(dept.code));
                                     setSelectedRightDepartmentCodes(newCodes);
@@ -1663,23 +1696,23 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                                       query_right: newCodes.length > 0 ? newCodes.join(',') : ''
                                     }));
                                   }}
-                                  className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
-                                >
+                                      className="hover:bg-slate-200 rounded-full p-0.5 transition-colors"
+                                    >
                                   <X className="w-3 h-3" />
-                                </button>
-                              </span>
+                                    </button>
+                                  </span>
                             ))}
-                          </div>
-                        )}
-                        <button
-                          type="button"
+                            </div>
+                          )}
+                          <button
+                            type="button"
                           onClick={() => setShowRightDepartmentPopup(true)}
                           className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-left bg-white hover:bg-slate-50"
                         >
                           {rightDepartmentNames.length > 0 
                             ? `เลือกแล้ว ${rightDepartmentNames.length} แผนก` 
                             : 'เลือกแผนก'}
-                        </button>
+                          </button>
                       </div>
 
                       {/* Station Selection สำหรับ duo ฝั่งขวา */}
@@ -1692,9 +1725,9 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                             <div className="flex flex-col items-center space-y-2">
                               <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center">
                                 <Plus className="w-6 h-6 text-slate-400" />
-                              </div>
+                                </div>
                               <span>กรุณาเลือกแผนกก่อน</span>
-                            </div>
+                              </div>
                           </div>
                         ) : rightStations.length === 0 ? (
                           <div className="text-center py-8 text-slate-400 text-sm border border-slate-200 rounded-lg bg-slate-50">
@@ -1729,7 +1762,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                                 const dept = deptNamesSource.find(d => String(d.code) === String(deptCode));
                                 const deptName = dept ? dept.name : `แผนก ${deptCode}`;
                                 
-                                return (
+                                      return (
                                   <div key={deptCode} className="mb-4 last:mb-0">
                                     {/* Label แสดงชื่อแผนก */}
                                     {deptCodes.length > 1 && (
@@ -1756,14 +1789,14 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                                           </label>
                                         );
                                       })}
-                                    </div>
-                                  </div>
-                                );
+                                          </div>
+                                          </div>
+                                      );
                               });
                             })()}
-                          </div>
-                        )}
-                      </div>
+                            </div>
+                          )}
+                        </div>
 
                       {/* Department ID Display สำหรับ duo ฝั่งขวา */}
                       <div className="mt-4">
@@ -2820,6 +2853,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
           }}
           selectedValues={selectedDepartmentCodes}
           multiSelect={true}
+          allowedDepartments={payload.type === 'drug' ? ['38', '39'] : undefined}
         />
       )}
 

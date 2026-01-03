@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/Users/basspola/code/Hospital/last hospital/lasted-monitorV2.1/ws/log/.3b363ea174ccaf1d210e83947dc87fdc4fb869f1-audit.json",
+    "files": [
+        {
+            "date": 1767439908893,
+            "name": "/Users/basspola/code/Hospital/last hospital/lasted-monitorV2.1/ws/log/combined-2026-01-03.log",
+            "hash": "20416d157087decaa292d9403d5dd475ed599a3de5f7cac3e7569d5cdf885ea6"
+        },
+        {
+            "date": 1767459600607,
+            "name": "/Users/basspola/code/Hospital/last hospital/lasted-monitorV2.1/ws/log/combined-2026-01-04.log",
+            "hash": "b3b8da895e3d7b1ce5353c8c2b5277c8e68ad022ded8ac135c868a4210713f20"
+        }
+    ],
+    "hashType": "sha256"
+}
