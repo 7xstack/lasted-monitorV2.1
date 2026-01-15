@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use, useRef, useMemo } from 'react';
+import { useEffect, useState, use, useRef, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import styles from './page.module.css';
@@ -14,7 +14,6 @@ import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const Header = dynamic(() => import('./Header'), { ssr: false });
 const InterviewTable = dynamic(() => import('./InterviewTable'), { ssr: false });
-const ServiceSection = dynamic(() => import('./ServiceSection'), { ssr: false });
 const SkippedQueueBar = dynamic(() => import('./SkippedQueueBar'), { ssr: false });
 const CallPopup = dynamic(() => import('./CallPopup'), { ssr: false });
 
@@ -205,6 +204,27 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
   const [visitData, setVisitData] = useState<VisitInfo[]>([]);
   const [countData, setCountData] = useState<{ [key: string]: number }>({});
   const [activeData, setActiveData] = useState<VisitInfo[]>([]);
+  
+  // Mock data for testing
+  const mockVisitData: VisitInfo[] = [
+    // Type 1: ผู้รับบริการทั่วไป (R) - 4 คิว
+    { id: 1, visit_q_no: 'R001', name: 'สมชาย', surname: 'ใจดี', urgent_level: 'R', Color: '#FF6B6B', waiting_time: '15 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 2, visit_q_no: 'R002', name: 'สมหญิง', surname: 'รักดี', urgent_level: 'R', Color: '#4ECDC4', waiting_time: '20 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 3, visit_q_no: 'R003', name: 'วิชัย', surname: 'สุขดี', urgent_level: 'R', Color: '#95E1D3', waiting_time: '25 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 4, visit_q_no: 'R004', name: 'มานะ', surname: 'ขยันดี', urgent_level: 'R', Color: '#F38181', waiting_time: '30 นาที', status_patient: 'รอ', status: 'รอ' },
+    // Type 2: ผู้รับบริการสูงอายุ 70 ปี (E) - 3 คิว
+    { id: 5, visit_q_no: 'E001', name: 'ประเสริฐ', surname: 'สูงวัย', urgent_level: 'E', Color: '#FFD93D', waiting_time: '10 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 6, visit_q_no: 'E002', name: 'สมพร', surname: 'อายุมาก', urgent_level: 'E', Color: '#FFA07A', waiting_time: '12 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 7, visit_q_no: 'E003', name: 'ทองดี', surname: 'เจ็ดสิบ', urgent_level: 'E', Color: '#FFB347', waiting_time: '18 นาที', status_patient: 'รอ', status: 'รอ' },
+    // Type 3: ผู้รับบริการกลุ่มนัด (U) - 4 คิว
+    { id: 8, visit_q_no: 'U001', name: 'นัดหมาย', surname: 'กลุ่มหนึ่ง', urgent_level: 'U', Color: '#6BCB77', waiting_time: '5 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 9, visit_q_no: 'U002', name: 'จองคิว', surname: 'ล่วงหน้า', urgent_level: 'U', Color: '#4D96FF', waiting_time: '8 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 10, visit_q_no: 'U003', name: 'นัดล่วงหน้า', surname: 'ไว้ก่อน', urgent_level: 'U', Color: '#9B59B6', waiting_time: '10 นาที', status_patient: 'รอ', status: 'รอ' },
+    { id: 11, visit_q_no: 'U004', name: 'จองไว้', surname: 'แล้ว', urgent_level: 'U', Color: '#3498DB', waiting_time: '12 นาที', status_patient: 'รอ', status: 'รอ' },
+  ];
+  
+  // ใช้ mock data ถ้า visitData ว่างเปล่า (สำหรับทดสอบ)
+  const displayVisitData = visitData.length === 0 ? mockVisitData : visitData;
   const [callData, setCallData] = useState<VisitInfo | null>(null);
   const [showCallPopup, setShowCallPopup] = useState(false);
   const [skippedData, setSkippedData] = useState<VisitInfo[]>([]);
@@ -222,6 +242,12 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
   const [isAdsMode, setIsAdsMode] = useState(false);
+  
+  // State สำหรับ Resizable Panel
+  const [rightPanelWidth, setRightPanelWidth] = useState<number>(33.33); // เปอร์เซ็นต์
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartX = useRef<number>(0);
+  const resizeStartWidth = useRef<number>(33.33);
   
   const isPausedRef = useRef(false);
   const currentSoundRef = useRef<Howl | null>(null);
@@ -586,6 +612,51 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
     };
   }, [id, audioUnlocked, settingStable, adsFullUrl]);
 
+  // Resize handlers - ต้องอยู่ก่อน conditional return
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartX.current = e.clientX;
+    resizeStartWidth.current = rightPanelWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [rightPanelWidth]);
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const mainContent = document.querySelector(`.${styles.mainContent}`) as HTMLElement;
+    if (!mainContent) return;
+    
+    const mainContentWidth = mainContent.offsetWidth;
+    const deltaX = e.clientX - resizeStartX.current;
+    const deltaPercent = (deltaX / mainContentWidth) * 100;
+    
+    let newWidth = resizeStartWidth.current - deltaPercent;
+    // จำกัดขนาดระหว่าง 20% ถึง 60%
+    newWidth = Math.max(20, Math.min(60, newWidth));
+    
+    setRightPanelWidth(newWidth);
+  }, [isResizing]);
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleResizeMove);
+      window.addEventListener('mouseup', handleResizeEnd);
+      
+      return () => {
+        window.removeEventListener('mousemove', handleResizeMove);
+        window.removeEventListener('mouseup', handleResizeEnd);
+      };
+    }
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
+
   if (error) {
     return (
       <div className={styles.container}>
@@ -627,14 +698,9 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
           </div>
         )}
 
-        <InterviewTable setting={setting} visitData={visitData} />
-
-        <ServiceSection 
-          setting={setting} 
-          activeData={activeData} 
-          urgentLevels={urgentLevels}
-          countData={countData}
-        />
+        <div className={styles.leftPanel} style={{ flex: 1, width: '100%' }}>
+          <InterviewTable setting={setting} visitData={displayVisitData} />
+        </div>
 
         {adsRightUrl && (
           <div className={styles.adsRight} style={{ position: 'relative' }}>

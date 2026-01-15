@@ -6,7 +6,6 @@ import { useNetworkError } from "../../../components/NetworkErrorProvider";
 import { Setting, VisitInfo } from "./types";
 import Header from "./Header";
 import InterviewTable from "./InterviewTable";
-import ServiceSection from "./ServiceSection";
 import SkippedQueueBar from "./SkippedQueueBar";
 import CallPopup from "./CallPopup";
 import AudioUnlockOverlay from "../../../components/AudioUnlockOverlay";
@@ -681,12 +680,6 @@ export default function SinglePage({
           ) : null;
         })()}
         <InterviewTable setting={setting} visitData={visitData} />
-
-        <ServiceSection
-          setting={setting}
-          sortedActiveData={activeData}
-          tableNames={tableNames}
-        />
         {/* แสดงรูปโฆษณาฝั่งขวา (ads_type = 'right') */}
         {(() => {
           const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');

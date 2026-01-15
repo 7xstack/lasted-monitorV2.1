@@ -6,7 +6,6 @@ import { useNetworkError } from '../../../components/NetworkErrorProvider';
 import Header from './Header';
 import InterviewTable from './InterviewTable';
 import InterviewTableRight from './InterviewTableRight';
-import ServiceSection from './ServiceSection';
 import SkippedQueueBar from './SkippedQueueBar';
 import { Setting, VisitInfo } from './types';
 import CallPopup from './CallPopup';
@@ -483,11 +482,9 @@ export default function DuoPage({ params }: { params: Promise<{ id: string }> })
         
         <div className={styles.column}>
           <InterviewTable setting={setting} visitData={visitDataLeft} />
-          <ServiceSection setting={setting} sortedActiveData={activeDataLeft} tableNames={tableNamesLeft} />
         </div>
         <div className={styles.column}>
           <InterviewTableRight setting={setting} visitData={visitDataRight} />
-          <ServiceSection setting={setting} sortedActiveData={activeDataRight} tableNames={tableNamesRight} isRight={true} />
         </div>
         
         {/* {adsRightUrl && (

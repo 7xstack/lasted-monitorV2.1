@@ -136,20 +136,52 @@
 
 /* Main Content */
 .mainContent {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
+  display: flex;
   gap: 0.5rem;
-  /* padding: 2rem; */
   padding-top: 0.5rem;
   min-height: calc(100vh - 120px);
+  position: relative;
 }
 
 .mainContentWithAds {
-  grid-template-columns: 250px 2fr 1fr;
+  /* Keep flex layout, ads will be positioned separately */
 }
 
 .mainContentWithAdsRight {
-  grid-template-columns: 2fr 1fr 250px;
+  /* Keep flex layout, ads will be positioned separately */
+}
+
+.leftPanel {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.rightPanel {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.resizeHandle {
+  width: 4px;
+  background: #cbd5e1;
+  cursor: col-resize;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.resizeHandle:hover {
+  background: #3b82f6;
+}
+
+.resizeHandle::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
 }
 
 .adsLeft {
@@ -237,7 +269,8 @@
 /* Left Column - Interview Point */
 .interviewSection {
   background: white;
-  max-height: calc(100vh - 30px);
+  min-height: calc(100vh - 30px);
+  height: calc(100vh - 30px);
   border-radius: 15px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.307);
   position: relative;
@@ -255,6 +288,175 @@
 /* ซ่อน scrollbar สำหรับ Chrome, Safari, Opera */
 .interviewSection::-webkit-scrollbar {
   display: none;
+}
+
+/* Main Container Header */
+.mainContainerHeader {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  padding-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: calc(33.333% - 0.67rem); /* เท่ากับความกว้างของแต่ละ queueTypeSection */
+  max-width: calc(33.333% - 0.67rem);
+}
+
+.mainContainerTitle {
+  color: #1e3a8a;
+  font-weight: bold;
+  font-size: 1.8rem;
+  margin: 0;
+  text-align: center;
+}
+
+/* 3 Types Container */
+.threeTypesContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.queueTypeSection {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  min-height: 100%;
+  height: 100%;
+}
+
+.queueTypeHeader {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 15;
+}
+
+.queueTypeTitle {
+  color: #1e3a8a;
+  font-weight: bold;
+  font-size: 1.5rem;
+  text-align: center;
+  margin: 0;
+}
+
+.queueTypeSection .interviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.queueTypeSection .interviewTable tbody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.queueTypeSection .interviewTable thead {
+  position: sticky;
+  top: 70px; /* ปรับให้อยู่ใต้ queueTypeHeader */
+  z-index: 10;
+  background: white;
+}
+
+.queueTypeSection .tableHeader {
+  background: #f9fafb;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  text-align: left;
+  border: none;
+  border-right: 1px solid #e5e7eb;
+}
+
+.queueTypeSection .tableHeader:last-child {
+  border-right: none;
+}
+
+.queueTypeSection .tableCell {
+  padding: 1rem 0.75rem;
+  text-align: left;
+  color: #0c266d;
+  font-size: 1rem;
+  border: none;
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+.queueTypeSection .noData {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+  padding: 2rem 0;
+  border: none;
+}
+
+/* Queue Cards Container */
+.queueCardsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.queueCard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.queueCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.queueBadge {
+  min-width: 120px;
+  height: 75px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.queueBadgeNumber {
+  color: white;
+  font-weight: bold;
+  font-size: 2.2rem;
+  font-family: var(--font-rubik);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.queueCardName {
+  color: #1e3a8a;
+  font-size: 1.8rem;
+  font-weight: 600;
+  flex: 1;
 }
 
 /* Middle Column - Active Patients */
@@ -653,6 +855,15 @@
     padding: 0.5rem 1rem;
     font-size: 0.8rem;
   }
+  
+  .threeTypesContainer {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .queueTypeTitle {
+    font-size: 1.3rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -692,6 +903,25 @@
   
   .patientName {
     font-size: 1.4rem;
+  }
+  
+  .threeTypesContainer {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .queueTypeTitle {
+    font-size: 1.2rem;
+  }
+  
+  .queueTypeSection .tableCell {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .queueTypeSection .tableHeader {
+    padding: 0.5rem;
+    font-size: 0.7rem;
   }
 }
 

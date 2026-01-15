@@ -1,4 +1,3 @@
-import { Hash, User } from 'lucide-react';
 import styles from './page.module.css';
 import { Setting, VisitInfo } from './types';
 import { formatPatientName } from './utils';
@@ -7,6 +6,49 @@ interface InterviewTableProps {
   setting: Setting;
   visitData: VisitInfo[];
 }
+
+// Helper function to render queue cards (แสดงแค่เลขคิวและชื่อนามสกุล)
+const renderQueueCards = (
+  setting: Setting,
+  filteredData: VisitInfo[],
+  title: string,
+  key: string
+) => {
+  return (
+    <div key={key} className={styles.queueTypeSection}>
+      <div className={styles.queueTypeHeader}>
+        <h3 className={styles.queueTypeTitle}>{title}</h3>
+      </div>
+      {filteredData.length > 0 && (
+        <div className={styles.queueCardsContainer}>
+          {filteredData.map((visit, index) => {
+            const queueColor = visit.Color 
+              ? (typeof visit.Color === 'string' ? visit.Color : String(visit.Color))
+              : '#0066AA';
+            
+            return (
+              <div key={visit.id || index} className={styles.queueCard}>
+                <div 
+                  className={styles.queueBadge}
+                  style={{ backgroundColor: queueColor }}
+                >
+                  <span className={styles.queueBadgeNumber}>
+                    {visit.visit_q_no || ' - '}
+                  </span>
+                </div>
+                {setting.stem_surname_table !== 'name' && (
+                  <span className={styles.queueCardName}>
+                    {formatPatientName(setting, visit)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function InterviewTable({ setting, visitData }: InterviewTableProps) {
   // Lock Position Mode: แสดงผลแบบ Card แนวตั้ง (ฝั่งซ้าย)
@@ -75,174 +117,45 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
     );
   }
   
-  // Normal Mode: แสดงตารางแบบปกติ
-  // เรียงลำดับ visitData ถ้าเปิด arr_r (table_arr2) - ฝั่งซ้าย
-  const sortedVisitData = setting.table_arr2 === 'true' 
-    ? [...visitData].sort((a, b) => {
-        // ระดับที่ 1: เรียงตาม priority_rate DESC (สูงสุดก่อน)
-        const priorityA = a.priority_rate ?? 0;
-        const priorityB = b.priority_rate ?? 0;
-        
-        if (priorityA !== priorityB) {
-          return priorityB - priorityA; // DESC: สูงสุดก่อน
-        }
-        
-        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม time_call DESC (ใหม่สุดก่อน)
-        const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
-        const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
-        
-        const timeA = timeCallA ? new Date(timeCallA).getTime() : 0;
-        const timeB = timeCallB ? new Date(timeCallB).getTime() : 0;
-        
-        return timeB - timeA; // DESC: ใหม่สุดก่อน
-      })
-    : visitData;
+  // 3 Types Mode: แสดง 3 ประเภทคิวแยกกัน
+  // ดึง urgent levels จาก list_urgent หรือใช้ค่า default
+  const listUrgent = setting.list_urgent 
+    ? setting.list_urgent.split(',').map(s => s.trim()).filter(s => s)
+    : [];
+  
+  // ใช้ 3 ตัวแรกจาก list_urgent หรือใช้ค่า default
+  const threeTypes = listUrgent.length >= 3 
+    ? listUrgent.slice(0, 3)
+    : listUrgent.length === 2
+    ? [...listUrgent, '']
+    : listUrgent.length === 1
+    ? [...listUrgent, '', '']
+    : ['R', 'E', 'U']; // Default values
+  
+  // กรองข้อมูลตาม urgent_level สำหรับแต่ละประเภท
+  const type1Data = visitData.filter(visit => visit.urgent_level === threeTypes[0]);
+  const type2Data = visitData.filter(visit => visit.urgent_level === threeTypes[1]);
+  const type3Data = visitData.filter(visit => visit.urgent_level === threeTypes[2]);
+  
+  // สร้างชื่อสำหรับแต่ละประเภทตามรูปที่ 2
+  const type1Title = 'ผู้รับบริการทั่วไป';
+  const type2Title = 'ผู้รับบริการสูงอายุ 70 ปี';
+  const type3Title = 'ผู้รับบริการกลุ่มนัด';
+  
+  // สร้างชื่อ header จาก setting (ใช้ department หรือ n_table)
+  const screenName = setting.department || setting.n_table || 'รอรับบริการ';
+  const screenTitle = `คิวเข้ารับบริการ${screenName}`;
   
   return (
     <section className={styles.interviewSection}>
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>
-          {setting.n_table || 'จุดซักประวัติ'}
-        </h2>
+      <div className={styles.mainContainerHeader}>
+        <h2 className={styles.mainContainerTitle}>{screenTitle}</h2>
       </div>
-      
-      <table className={styles.interviewTable}>
-        <thead>
-          <tr>
-            <th className={styles.tableHeader}>
-              <div className={styles.headerItem}>
-                <Hash className={styles.headerIcon} size={20} />
-                <span>หมายเลข</span>
-              </div>
-            </th>
-            {setting.stem_surname_table !== 'name' && (
-              <th className={styles.tableHeader}>
-                <div className={styles.headerItem}>
-                  <User className={styles.headerIcon} size={20} />
-                  <span>ชื่อ-นามสกุล</span>
-                </div>
-              </th>
-            )}
-            {setting.time_col === 'true' && (
-              <th className={styles.tableHeader}>
-                <div className={styles.headerItem}>
-                  <span>เวลารอ</span>
-                </div>
-              </th>
-            )}
-            {setting.urgent_level === 'true' && (
-              <th className={styles.tableHeader}>
-                <div className={styles.headerItem}>
-                  <span>ระดับความเร่งด่วน</span>
-                </div>
-              </th>
-            )}
-            {setting.status_patient === 'true' && (
-              <th className={styles.tableHeader}>
-                <div className={styles.headerItem}>
-                  <span>สถานะ</span>
-                </div>
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {sortedVisitData.length > 0 ? (
-            sortedVisitData.map((visit, index) => (
-              <tr key={visit.id || index} className={styles.tableRow}>
-                <td className={styles.tableCell}>
-                  <div className={styles.queueNumberContainer}>
-                    {setting.urgent_color === 'true' && visit.Color && (
-                      <div 
-                        className={styles.urgentColorBlock}
-                        style={{ backgroundColor: visit.Color as string }}
-                      />
-                    )}
-                    <span 
-                      className={styles.queueNumberLeft}
-                      style={{ 
-                        color: setting.urgent_color === 'true' && visit.Color as string
-                          ? visit.Color as string
-                          : '#0c266d' 
-                      }}
-                    >
-                      {visit.visit_q_no || ' - '}
-                    </span>
-                  </div>
-                </td>
-                {setting.stem_surname_table !== 'name' && (
-                  <td className={styles.tableCell}>
-                    <span 
-                      className={styles.patientName}
-                      style={{ 
-                        color: setting.urgent_color === 'true' && visit.Color as string
-                          ? visit.Color as string
-                          : '#0c266d' 
-                      }}
-                    >
-                      {formatPatientName(setting, visit)}
-                    </span>
-                  </td>
-                )}
-                {setting.time_col === 'true' && (
-                  <td className={styles.tableCell}>
-                    <span 
-                      className={styles.patientName}
-                      style={{ 
-                        color: setting.urgent_color === 'true' && visit.Color as string
-                          ? visit.Color as string
-                          : '#0c266d' 
-                      }}
-                    >
-                      {visit.waiting_time === null || visit.waiting_time === undefined || visit.waiting_time === 'None' || String(visit.waiting_time).toLowerCase() === 'null'
-                        ? '-'
-                        : String(visit.waiting_time)}
-                    </span>
-                  </td>
-                )}
-                {setting.urgent_level === 'true' && (
-                  <td className={styles.tableCell}>
-                    <div className={styles.urgentLevel}>
-                      <div 
-                        className={styles.urgentCircle}
-                        style={{ 
-                          backgroundColor: visit.Color as string || '#0066AA'
-                        }}
-                      />
-                    </div>
-                  </td>
-                )}
-                {setting.status_patient === 'true' && (
-                  <td className={styles.tableCell}>
-                    <span 
-                      className={styles.patientName}
-                      style={{ 
-                        color: setting.urgent_color === 'true' && visit.status_patient as string
-                          ? visit.status_patient as string
-                          : '#0c266d' 
-                      }}
-                    >
-                      {visit.status_patient || '-'}
-                    </span>
-                  </td>
-                )}
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={
-                1 + // หมายเลข
-                (setting.stem_surname_table !== 'name' ? 1 : 0) + // ชื่อ-นามสกุล
-                (setting.time_col === 'true' ? 1 : 0) + // เวลารอ
-                (setting.urgent_level === 'true' ? 1 : 0) + // ระดับความเร่งด่วน
-                (setting.status_patient === 'true' ? 1 : 0) // สถานะ
-              } className={styles.noData}>
-                {setting.n_listtable || 'ไม่มีข้อมูล'}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <div className={styles.threeTypesContainer}>
+        {renderQueueCards(setting, type1Data, type1Title, 'type1')}
+        {renderQueueCards(setting, type3Data, type3Title, 'type3')}
+        {renderQueueCards(setting, type2Data, type2Title, 'type2')}
+      </div>
     </section>
   );
 }
