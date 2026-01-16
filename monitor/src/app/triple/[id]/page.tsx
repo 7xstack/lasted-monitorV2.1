@@ -6,7 +6,6 @@ import { useNetworkError } from "../../../components/NetworkErrorProvider";
 import { Setting, VisitInfo } from "./types";
 import Header from "./Header";
 import InterviewTable from "./InterviewTable";
-import ServiceSection from "./ServiceSection";
 import SkippedQueueBar from "./SkippedQueueBar";
 import CallPopup from "./CallPopup";
 import AudioUnlockOverlay from "../../../components/AudioUnlockOverlay";
@@ -17,8 +16,155 @@ import {
 } from "../../../lib/audio-unlock";
 // import { logAudioEvent } from '../../../lib/audio-logger';
 import LoadingSpinner from "../../../components/LoadingSpinner";
+import { Setting, VisitInfo } from "./types";
+
+// เปิด/ปิด Mock Mode - ตั้งเป็น true เพื่อใช้ mock data
+const USE_MOCK_DATA = true;
 
 const VOICE_DOMAIN = "https://voice.aztecthstudio.com";
+
+// Mock Setting Data
+const getMockSetting = (id: string): Setting => ({
+  id: parseInt(id) || 1,
+  department: 'แผนกผู้ป่วยนอก',
+  n_hospital: 'โรงพยาบาลตัวอย่าง',
+  n_room: 'ห้องตรวจ 1',
+  n_table: 'โต๊ะ 1',
+  n_listtable: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3',
+  n_listroom: 'ห้องตรวจ 1,ห้องตรวจ 2',
+  department_load: '2,3,4',
+  department_room_load: '',
+  time_col: 'true',
+  table_arr: 'โต๊ะ 1',
+  table_arr2: '',
+  amount_boxL: 8,
+  amount_boxR: 0,
+  stem_surname: 'name',
+  stem_surname_table: 'name',
+  stem_surname_popup: 'false',
+  stem_name_table: 'name',
+  stem_name_popup: 'false',
+  station_l: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3,โต๊ะ 4',
+  station_r: '',
+  stem_popup: 'false',
+  a_sound: 'true',
+  b_sound: 'false',
+  c_sound: 'false',
+  stem_name: 'name',
+  urgent_color: 'true',
+  lock_position: 'false',
+  lock_position_right: 'false',
+  urgent_level: 'true',
+  status_patient: 'true',
+  status_check: 'false',
+  ads: '',
+  ads_type: 'split',
+  enable_ads: false,
+  ads_path_left: '',
+  ads_path_right: '',
+  timeout: null,
+  pages: null,
+  urgent_setup: 'ฉุกเฉิน',
+  type: 'triple',
+  alternate: null,
+  voice: '1',
+  style_voice: '2',
+  set_descrip: 'false',
+  set_notice: 'false',
+  type_popup: '1',
+  time_wait: '20',
+  listPage: '',
+  limitNum: null,
+  speedLoop: null,
+  activeLoop: null,
+  font: 'Rubik',
+  color_static: null,
+  color_dynamic: null,
+  display_three_columns: 'true',
+  column_title_1: 'ผู้รับบริการทั่วไป',
+  column_title_2: 'ผู้รับบริการสูงอายุ 70 ปี',
+  column_title_3: 'ผู้รับบริการกลุ่มนัด',
+  list_urgent: 'R,E,U',
+});
+
+// Mock Visit Data - แบ่งเป็น 3 ประเภทตาม urgent_level
+const generateMockVisitData = (): VisitInfo[] => {
+  const visits: VisitInfo[] = [];
+  const names = [
+    'สมชาย ใจดี', 'สมหญิง รักสุข', 'วิชัย เก่งมาก', // R
+    'มาลี สวยงาม', 'ประเสริฐ ดีใจ', 'สุดา งามมาก', // E
+    'วิเชียร เก่งมาก', 'สมพร รักสุข', // U
+  ];
+  const queueNumbers = ['A001', 'A002', 'A003', 'A004', 'A005', 'A006', 'A007', 'A008'];
+  const urgentLevels = ['R', 'R', 'R', 'E', 'E', 'E', 'U', 'U'];
+  const colors = ['#0066AA', '#FF6B6B', '#4ECDC4'];
+  
+  for (let i = 0; i < 8; i++) {
+    const urgentLevel = urgentLevels[i];
+    let color = '#0066AA';
+    if (urgentLevel === 'E') color = '#FF6B6B';
+    if (urgentLevel === 'U') color = '#4ECDC4';
+    
+    visits.push({
+      id: i + 1,
+      code_dept_id: '2',
+      patient_name: names[i],
+      visit_q_no: queueNumbers[i],
+      queue_number: queueNumbers[i],
+      visit_date: new Date().toISOString().split('T')[0],
+      status: 'waiting',
+      urgent_id: i % 3 + 1,
+      urgent_color: color,
+      urgent_setup: 'ฉุกเฉิน',
+      urgent_level: urgentLevel,
+      priority_rate: 1,
+      check_in: new Date().toISOString(),
+      time_call: null,
+      status_call: null,
+      arr_r: false,
+      station_index: 0,
+      Color: color,
+    });
+  }
+  return visits;
+};
+
+// Mock Active Data
+const generateMockActiveData = (): VisitInfo[] => {
+  const active: VisitInfo[] = [];
+  const names = ['นพ. ตัวอย่าง', 'พญ. ทดสอบ'];
+  const stations = ['โต๊ะ 1', 'โต๊ะ 2'];
+  
+  for (let i = 0; i < 2; i++) {
+    active.push({
+      id: i + 100,
+      code_dept_id: '2',
+      patient_name: names[i],
+      visit_q_no: `A00${i + 1}`,
+      queue_number: `A00${i + 1}`,
+      visit_date: new Date().toISOString().split('T')[0],
+      status: 'active',
+      urgent_id: 1,
+      urgent_color: '#0066AA',
+      urgent_setup: 'ฉุกเฉิน',
+      urgent_level: 'R',
+      priority_rate: 1,
+      check_in: new Date().toISOString(),
+      time_call: new Date().toISOString(),
+      status_call: 'active',
+      arr_r: false,
+      station_index: i,
+      station: stations[i],
+      Color: '#0066AA',
+    });
+  }
+  return active;
+};
+
+// Mock Skipped Data
+const generateMockSkippedData = (): VisitInfo[] => {
+  return [];
+};
 
 const playVoicePlaylist = (
   voicePaths: string[],
@@ -216,11 +362,9 @@ export default function SinglePage({
   // แสดงโฆษณาแบบหน้าแยก (overlay) หลังหน่วงเวลา และแสดงค้าง 20 วิ
   const [showSplitAd, setShowSplitAd] = useState(false);
   
-  // Swap state สำหรับ listPage และ time_wait
-  const swapTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [pageIds, setPageIds] = useState<string[]>([]);
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [swapSetting, setSwapSetting] = useState<Setting | null>(null); // เก็บ swap setting แยก
+  // Auto-switch state สำหรับ id 214/215
+  const autoSwitchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSwitchInfoRef = useRef<{ nextId: string; delaySeconds: number } | null>(null);
   
   // currentDisplayId สำหรับสลับ id โดยไม่เปลี่ยน URL
   const [currentDisplayId, setCurrentDisplayId] = useState<string>(id);
@@ -235,7 +379,6 @@ export default function SinglePage({
   useEffect(() => {
     setCurrentDisplayId(id);
     previousDisplayIdRef.current = id;
-    setCurrentPageIndex(0);
     // Clear data เมื่อเปลี่ยน URL
     setVisitData([]);
     setActiveData([]);
@@ -259,47 +402,59 @@ export default function SinglePage({
     return () => clearInterval(checkInterval);
   }, []);
 
-  // Fetch swap setting ครั้งแรก (ใช้ id จาก URL)
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchSwapSetting = async () => {
-      try {
-        const response = await fetch(`/api/setting/${id}`);
-        const result = await response.json();
-        if (result.success && result.data.type === 'swap' && result.data.listPage) {
-          // เก็บ swap setting ไว้
-          setSwapSetting(result.data);
-          
-          // แยก listPage ด้วย comma เป็น array
-          const ids = result.data.listPage.split(',').map((s: string) => s.trim()).filter((s: string) => s);
-          setPageIds(ids);
-          
-          // ตั้งค่า currentDisplayId เป็น ID แรกใน listPage
-          if (ids.length > 0) {
-            setCurrentDisplayId(ids[0]);
-            setCurrentPageIndex(0);
-            console.log(`[Swap] ตั้งค่า listPage: ${ids.join(', ')}, เริ่มที่ ID: ${ids[0]}`);
-          }
-        }
-      } catch (e) {
-        console.error("Error fetching swap setting:", e);
-      }
-    };
-
-    fetchSwapSetting();
-  }, [id]);
-
-  // Fetch setting ตาม currentDisplayId (สำหรับแสดงข้อมูลของหน้าจอปัจจุบัน)
+  // Fetch setting ตาม currentDisplayId
   useEffect(() => {
     if (!currentDisplayId) return;
 
     const fetchSetting = async () => {
       try {
+        // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
+        if (USE_MOCK_DATA) {
+          console.log('[Mock] ใช้ mock setting data สำหรับ id:', currentDisplayId);
+          // Simulate API delay
+          await new Promise(resolve => setTimeout(resolve, 300));
+          const mockSetting = getMockSetting(currentDisplayId);
+          setSetting(mockSetting);
+          return;
+        }
+        
         const response = await fetch(`/api/setting/${currentDisplayId}`);
         const result = await response.json();
         if (result.success) {
           setSetting(result.data);
+          
+          // ตรวจสอบ autoSwitch metadata สำหรับ id 214/215
+          if (result.autoSwitch && result.autoSwitch.enabled) {
+            autoSwitchInfoRef.current = {
+              nextId: result.autoSwitch.nextId,
+              delaySeconds: result.autoSwitch.delaySeconds || 20,
+            };
+            console.log(`[AutoSwitch] ตั้งค่า auto-switch: ${currentDisplayId} → ${result.autoSwitch.nextId} ใน ${result.autoSwitch.delaySeconds} วินาที`);
+            
+            // เริ่ม timer ทันทีหลังจากได้ autoSwitch info (ถ้า URL id เป็น 214/215 และไม่มี popup)
+            if ((id === '214' || id === '215') && !showCallPopup && autoSwitchInfoRef.current) {
+              // Clear timer เก่าก่อน
+              if (autoSwitchTimerRef.current) {
+                clearTimeout(autoSwitchTimerRef.current);
+                autoSwitchTimerRef.current = null;
+              }
+              
+              const { nextId, delaySeconds } = autoSwitchInfoRef.current;
+              console.log(`[AutoSwitch] เริ่มนับเวลา ${delaySeconds} วินาทีเพื่อสลับไป id ${nextId}`);
+              
+              autoSwitchTimerRef.current = setTimeout(() => {
+                console.log(`[AutoSwitch] ครบเวลาแล้ว กำลังสลับไป id ${nextId}`);
+                setCurrentDisplayId(nextId);
+              }, delaySeconds * 1000);
+            }
+          } else {
+            // ถ้าไม่มี autoSwitch ให้ clear info และ timer
+            autoSwitchInfoRef.current = null;
+            if (autoSwitchTimerRef.current) {
+              clearTimeout(autoSwitchTimerRef.current);
+              autoSwitchTimerRef.current = null;
+            }
+          }
         } else {
           setError("Failed to fetch settings.");
           console.error("Failed to fetch settings:", result.error);
@@ -334,7 +489,7 @@ export default function SinglePage({
     return () => {
       clearInterval(interval);
     };
-  }, [currentDisplayId]);
+  }, [currentDisplayId, id, showCallPopup]);
 
   // Animation: fade in/out เมื่อ currentDisplayId เปลี่ยน
   useEffect(() => {
@@ -375,84 +530,83 @@ export default function SinglePage({
     
   }, [currentDisplayId]);
 
-  // Swap logic: เริ่ม/รีเซ็ต timer และสลับ currentDisplayId ตาม listPage
+  // Auto-switch logic: เริ่ม/รีเซ็ต timer และสลับ currentDisplayId (ทำงานเมื่อ URL id เป็น 214 หรือ 215)
   useEffect(() => {
-    // ตรวจสอบว่ามี swapSetting และ pageIds
-    if (!swapSetting || pageIds.length === 0) {
-      // ถ้าไม่มี swapSetting หรือไม่มี pageIds ให้ clear timer
-      if (swapTimerRef.current) {
-        clearTimeout(swapTimerRef.current);
-        swapTimerRef.current = null;
+    // ตรวจสอบว่า URL id เป็น 214 หรือ 215 และมี autoSwitch info
+    if (!(id === '214' || id === '215') || !autoSwitchInfoRef.current) {
+      // ถ้าไม่ใช่ 214/215 หรือไม่มี autoSwitch ให้ clear timer
+      if (autoSwitchTimerRef.current) {
+        clearTimeout(autoSwitchTimerRef.current);
+        autoSwitchTimerRef.current = null;
       }
       return;
     }
 
     // Clear timer เก่าก่อน (จะเริ่มใหม่ด้านล่าง)
-    if (swapTimerRef.current) {
-      clearTimeout(swapTimerRef.current);
-      swapTimerRef.current = null;
+    if (autoSwitchTimerRef.current) {
+      clearTimeout(autoSwitchTimerRef.current);
+      autoSwitchTimerRef.current = null;
     }
 
     // ถ้า popup เปิดอยู่ ไม่เริ่ม timer (รอให้ popup ปิดก่อน)
     if (showCallPopup) {
-      console.log(`[Swap] รอให้ popup ปิดก่อนเริ่ม timer`);
+      console.log(`[AutoSwitch] รอให้ popup ปิดก่อนเริ่ม timer`);
       return;
     }
 
-    // ถ้ากำลัง transition อยู่ ให้รอให้ transition เสร็จก่อน (2 วินาที = fade in 1s + fade out 1s)
-    if (isTransitioning) {
-      console.log(`[Swap] รอให้ transition เสร็จก่อนเริ่ม timer`);
-      const transitionWaitTime = 2000; // รอ transition เสร็จ (fade in 1s + fade out 1s)
-      
-      const waitForTransition = setTimeout(() => {
-        // หลังจาก transition เสร็จแล้ว เริ่ม timer
-        startSwapTimer();
-      }, transitionWaitTime);
-      
-      return () => {
-        clearTimeout(waitForTransition);
-      };
-    }
-
-    // เริ่ม timer ทันทีถ้าไม่มี transition
-    startSwapTimer();
-
-    function startSwapTimer() {
-      // ตรวจสอบ swapSetting อีกครั้ง
-      if (!swapSetting) return;
-      
-      // อ่าน time_wait จาก swapSetting (หน่วย: วินาที) แล้วแปลงเป็น ms
-      const timeWaitSeconds = swapSetting.time_wait ? parseInt(String(swapSetting.time_wait)) : 20;
-      const timeWaitSecondsValue = isNaN(timeWaitSeconds) ? 20 : timeWaitSeconds;
-      const delayMs = timeWaitSecondsValue * 1000; // แปลงจากวินาทีเป็น ms
-
-      console.log(`[Swap] เริ่มนับเวลา ${delayMs}ms เพื่อสลับไปหน้าจอถัดไป`);
-      
-      swapTimerRef.current = setTimeout(() => {
-        // คำนวณ index ถัดไป (วนรอบ)
-        const nextIndex = (currentPageIndex + 1) % pageIds.length;
-        const nextId = pageIds[nextIndex];
-        
-        console.log(`[Swap] ครบเวลาแล้ว กำลังสลับไป id ${nextId} (${nextIndex + 1}/${pageIds.length})`);
-        
-        setCurrentPageIndex(nextIndex);
-        // สลับ currentDisplayId โดยไม่เปลี่ยน URL (จะ trigger animation อัตโนมัติ)
-        setCurrentDisplayId(nextId);
-      }, delayMs);
-    }
+    // เริ่ม timer เมื่อไม่มี popup
+    const { nextId, delaySeconds } = autoSwitchInfoRef.current;
+    console.log(`[AutoSwitch] เริ่มนับเวลา ${delaySeconds} วินาทีเพื่อสลับไป id ${nextId}`);
+    
+    autoSwitchTimerRef.current = setTimeout(() => {
+      console.log(`[AutoSwitch] ครบเวลาแล้ว กำลังสลับไป id ${nextId}`);
+      // สลับ currentDisplayId โดยไม่เปลี่ยน URL (จะ trigger animation อัตโนมัติ)
+      setCurrentDisplayId(nextId);
+    }, delaySeconds * 1000);
 
     // Cleanup เมื่อ component unmount หรือ dependencies เปลี่ยน
     return () => {
-      if (swapTimerRef.current) {
-        clearTimeout(swapTimerRef.current);
-        swapTimerRef.current = null;
+      if (autoSwitchTimerRef.current) {
+        clearTimeout(autoSwitchTimerRef.current);
+        autoSwitchTimerRef.current = null;
       }
     };
-  }, [swapSetting, pageIds, currentPageIndex, showCallPopup, isTransitioning]);
+  }, [currentDisplayId, showCallPopup, id]);
 
   // WebSocket connection - ใช้ currentDisplayId และ re-register เมื่อเปลี่ยน
   useEffect(() => {
     if (!currentDisplayId || !audioUnlocked) return;
+
+    // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
+    if (USE_MOCK_DATA) {
+      console.log('[Mock] ใช้ mock WebSocket data สำหรับ id:', currentDisplayId);
+      
+      // ตั้งค่า mock data ทันที
+      setVisitData(generateMockVisitData());
+      setActiveData(generateMockActiveData());
+      setSkippedData(generateMockSkippedData());
+      
+      // Simulate data update ทุก 5 วินาที
+      const mockInterval = setInterval(() => {
+        // สุ่มเปลี่ยนข้อมูลเล็กน้อยเพื่อให้ดูเหมือนมีการอัปเดต
+        const newVisitData = generateMockVisitData();
+        // สลับลำดับ queue numbers เพื่อให้ดูมีการเปลี่ยนแปลง
+        newVisitData.forEach((visit, index) => {
+          visit.visit_q_no = `A00${(index + Math.floor(Date.now() / 5000) % 8) + 1}`;
+        });
+        setVisitData(newVisitData);
+        setActiveData(generateMockActiveData());
+        setSkippedData(generateMockSkippedData());
+        console.log('[Mock] อัปเดต mock data');
+      }, 5000);
+      
+      return () => {
+        clearInterval(mockInterval);
+        setVisitData([]);
+        setActiveData([]);
+        setSkippedData([]);
+      };
+    }
 
     const wsUrl = `wss://monitor.aztecthstudio.com/ws/`;
     const ws = new WebSocket(wsUrl);
@@ -463,22 +617,13 @@ export default function SinglePage({
     ws.onopen = () => {
       console.log(`[WebSocket] Connected for id ${currentDisplayId}`);
       isConnectionActive = true;
-      
-      // ตรวจสอบว่าเป็น swap type และมี listPage
-      let registerPayload: any = {
-        type: "register",
-        id: currentDisplayId,
-        query_type: "single",
-      };
-      
-      // ถ้าเป็น swap type และมี listPage ให้ส่ง listPage ที่ split แล้ว
-      if (swapSetting && swapSetting.listPage) {
-        const listPageArray = swapSetting.listPage.split(',').map((s: string) => s.trim()).filter((s: string) => s);
-        registerPayload.listPage = listPageArray;
-        console.log(`[WebSocket] ส่ง listPage ไป register:`, listPageArray);
-      }
-      
-      ws.send(JSON.stringify(registerPayload));
+      ws.send(
+        JSON.stringify({
+          type: "register",
+          id: currentDisplayId, // ใช้ currentDisplayId แทน id จาก URL
+          query_type: "triple",
+        })
+      );
     };
 
     ws.onmessage = async (event) => {
@@ -621,7 +766,7 @@ export default function SinglePage({
       // VN จะถูกลบหลังจาก 5 วินาที (นับจากตอนที่เก็บ VN)
       // เก็บ playedVnSet ไว้เพื่อป้องกันการเล่นซ้ำเมื่อ re-connect
     };
-  }, [currentDisplayId, audioUnlocked, swapSetting]);
+  }, [currentDisplayId, audioUnlocked]);
 
   // โฆษณาแบบหน้าแยก: หน่วงเวลาแล้วแสดง 20 วิ
   useEffect(() => {
@@ -723,12 +868,6 @@ export default function SinglePage({
           ) : null;
         })()}
         <InterviewTable setting={setting} visitData={visitData} />
-
-        <ServiceSection
-          setting={setting}
-          sortedActiveData={activeData}
-          tableNames={tableNames}
-        />
         {/* แสดงรูปโฆษณาฝั่งขวา (ads_type = 'right') */}
         {(() => {
           const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');

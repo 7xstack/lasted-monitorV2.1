@@ -475,6 +475,7 @@ export default function AddScreenModal({
                       <option value="duo">Duo</option>
                       <option value="swap">Swap</option>
                       <option value="er">ER</option>
+                      <option value="triple">Triple</option>
                     </select>
                   </div>
 

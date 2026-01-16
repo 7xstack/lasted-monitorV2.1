@@ -1016,6 +1016,8 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                       <SelectItem value="swap">Swap</SelectItem>
                       <SelectSeparator />
                       <SelectItem value="er">ER</SelectItem>
+                      <SelectSeparator />
+                      <SelectItem value="triple">Triple</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

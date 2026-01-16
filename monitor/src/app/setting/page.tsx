@@ -37,6 +37,83 @@ export default function SettingPage() {
   const [availableSettings, setAvailableSettings] = useState<SettingData[]>([]);
   const [swapTimeWait, setSwapTimeWait] = useState<number>(20); // default 20 วินาที
 
+  // Mock data flag - ตั้งเป็น true เพื่อใช้ mock data เมื่อ server ใช้ไม่ได้
+  const USE_MOCK_DATA = true;
+
+  // Mock data สำหรับหน้าจอแต่ละ type
+  const getMockSettings = (): SettingData[] => [
+    {
+      id: '1',
+      type: 'single',
+      n_hospital: 'โรงพยาบาลตัวอย่าง',
+      n_department: 'แผนกผู้ป่วยนอก',
+      head_left: 'รอรับบริการ',
+      head_right: '',
+      amount_left: 8,
+      amount_right: 0,
+      query_left: '2,3,4',
+      query_right: '',
+      station_left: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3,โต๊ะ 4',
+      station_right: '',
+    },
+    {
+      id: '2',
+      type: 'duo',
+      n_hospital: 'โรงพยาบาลตัวอย่าง',
+      n_department: 'แผนกอายุรกรรม',
+      head_left: 'รอรับบริการ',
+      head_right: 'กำลังรับบริการ',
+      amount_left: 6,
+      amount_right: 4,
+      query_left: '2,3',
+      query_right: '4,5',
+      station_left: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3',
+      station_right: 'โต๊ะ 4,โต๊ะ 5',
+    },
+    {
+      id: '3',
+      type: 'er',
+      n_hospital: 'โรงพยาบาลตัวอย่าง',
+      n_department: 'แผนกฉุกเฉิน',
+      head_left: 'ER Monitor',
+      head_right: '',
+      amount_left: 5,
+      amount_right: 0,
+      query_left: '6,7',
+      query_right: '',
+      station_left: 'ER-A,ER-B,ER-C,ER-D,ER-E',
+      station_right: '',
+    },
+    {
+      id: '4',
+      type: 'swap',
+      n_hospital: 'โรงพยาบาลตัวอย่าง',
+      n_department: 'Swap Monitor',
+      head_left: '',
+      head_right: '',
+      amount_left: 0,
+      amount_right: 0,
+      query_left: '',
+      query_right: '',
+      station_left: '',
+      station_right: '',
+    },
+    {
+      id: '5',
+      type: 'triple',
+      n_hospital: 'โรงพยาบาลตัวอย่าง',
+      n_department: 'แผนกผู้ป่วยนอก',
+      head_left: 'ผู้รับบริการทั่วไป',
+      head_right: 'ผู้รับบริการสูงอายุ',
+      amount_left: 8,
+      amount_right: 0,
+      query_left: '2,3,4',
+      query_right: '',
+      station_left: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3,โต๊ะ 4',
+      station_right: '',
+    },
+  ];
+
   // Check authentication - ตรวจสอบทุกครั้งที่เข้าหน้า setting
   useEffect(() => {
     const checkAuth = () => {
@@ -86,6 +163,22 @@ export default function SettingPage() {
   const fetchSettings = useCallback(async () => {
     try {
       setIsLoadingData(true);
+      
+      // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
+      if (USE_MOCK_DATA) {
+        console.log('[Mock] ใช้ mock settings data');
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const mockSettings = getMockSettings();
+        setSettings(mockSettings);
+        setDepartmentCount(mockSettings.length);
+        if (mockSettings.length > 0 && !selectedId) {
+          setSelectedId(mockSettings[0].id);
+        }
+        setIsLoadingData(false);
+        return;
+      }
+      
       const response = await fetch('/api/setting/count');
       const data = await response.json();
 
@@ -151,6 +244,16 @@ export default function SettingPage() {
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
+      // ถ้าเกิด error และไม่ได้ใช้ mock data ให้ใช้ mock data เป็น fallback
+      if (!USE_MOCK_DATA) {
+        console.log('[Fallback] ใช้ mock settings data เนื่องจากเกิด error');
+        const mockSettings = getMockSettings();
+        setSettings(mockSettings);
+        setDepartmentCount(mockSettings.length);
+        if (mockSettings.length > 0 && !selectedId) {
+          setSelectedId(mockSettings[0].id);
+        }
+      }
     } finally {
       setIsLoadingData(false);
     }
@@ -159,6 +262,22 @@ export default function SettingPage() {
   // Fetch available settings for Swap Modal
   const fetchAvailableSettings = useCallback(async () => {
     try {
+      // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
+      if (USE_MOCK_DATA) {
+        console.log('[Mock] ใช้ mock available settings data');
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // สร้าง mock available settings จาก mock settings
+        const mockAvailableSettings = getMockSettings().map(s => ({
+          id: s.id,
+          type: s.type,
+          n_hospital: s.n_hospital,
+          n_department: s.n_department,
+        }));
+        setAvailableSettings(mockAvailableSettings);
+        return;
+      }
+      
       const response = await fetch('/api/id-setting');
       const data = await response.json();
       if (data.success) {
@@ -166,12 +285,40 @@ export default function SettingPage() {
       }
     } catch (error) {
       console.error('Error fetching available settings:', error);
+      // Fallback to mock data
+      if (!USE_MOCK_DATA) {
+        const mockAvailableSettings = getMockSettings().map(s => ({
+          id: s.id,
+          type: s.type,
+          n_hospital: s.n_hospital,
+          n_department: s.n_department,
+        }));
+        setAvailableSettings(mockAvailableSettings);
+      }
     }
   }, []);
 
   // Fetch department names
   const fetchDepartmentNames = useCallback(async () => {
     try {
+      // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
+      if (USE_MOCK_DATA) {
+        console.log('[Mock] ใช้ mock department names data');
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Mock department names
+        const mockDepartmentNames: Record<string, string> = {
+          '2': 'แผนกผู้ป่วยนอก',
+          '3': 'แผนกอายุรกรรม',
+          '4': 'แผนกศัลยกรรม',
+          '5': 'แผนกกุมารเวชกรรม',
+          '6': 'แผนกฉุกเฉิน',
+          '7': 'แผนกสูติ-นรีเวชกรรม',
+        };
+        setDepartmentNames(mockDepartmentNames);
+        return;
+      }
+      
       const response = await fetch('/api/department');
       const data = await response.json();
       if (data.success && data.data) {
@@ -183,6 +330,18 @@ export default function SettingPage() {
       }
     } catch (error) {
       console.error('Error fetching department names:', error);
+      // Fallback to mock data
+      if (!USE_MOCK_DATA) {
+        const mockDepartmentNames: Record<string, string> = {
+          '2': 'แผนกผู้ป่วยนอก',
+          '3': 'แผนกอายุรกรรม',
+          '4': 'แผนกศัลยกรรม',
+          '5': 'แผนกกุมารเวชกรรม',
+          '6': 'แผนกฉุกเฉิน',
+          '7': 'แผนกสูติ-นรีเวชกรรม',
+        };
+        setDepartmentNames(mockDepartmentNames);
+      }
     }
   }, []);
 

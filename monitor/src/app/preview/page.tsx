@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Monitor, Rows, AlertTriangle, ArrowRight, Eye, Play, Square } from 'lucide-react';
+import { Monitor, Rows, AlertTriangle, ArrowRight, Eye, Play, Square, Columns } from 'lucide-react';
 
 export default function PreviewPage() {
   const router = useRouter();
@@ -39,6 +39,12 @@ export default function PreviewPage() {
       title: 'Swap Monitor',
       description: 'สลับหน้าจออัตโนมัติระหว่างหลายหน้าจอ',
       icon: <ArrowRight className="h-8 w-8 text-sky-400" />,
+    },
+    {
+      key: 'triple',
+      title: 'Triple Monitor',
+      description: 'แสดงข้อมูลสามคอลัมน์ แยกตามประเภทผู้รับบริการ',
+      icon: <Columns className="h-8 w-8 text-sky-400" />,
     },
   ];
 

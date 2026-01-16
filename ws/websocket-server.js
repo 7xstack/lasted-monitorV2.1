@@ -8,6 +8,7 @@ import fetchErData from './handlers/er.js';
 import fetchSingleData from './handlers/single.js';
 import fetchDuoData from './handlers/duo.js';
 import fetchEr2Data from './handlers/er_2.js';
+import fetchTripleData from './handlers/triple.js';
 
 const wss = new WebSocketServer({ port: 1100 });
 
@@ -55,7 +56,7 @@ wss.on('connection', ws => {
             ws.setting_id = data.id;
             info(`Client registered for setting_id: ${ws.setting_id}`);
         }
-        if (data.query_type && ['er', 'er_2', 'single', 'duo'].includes(data.query_type)) {
+        if (data.query_type && ['er', 'er_2', 'single', 'duo', 'triple'].includes(data.query_type)) {
             ws.query_type = data.query_type;
             info(`Client registered for query_type: ${ws.query_type}`);
         }
@@ -92,6 +93,9 @@ setInterval(async () => {
           break;
         case 'er_2':
           await fetchEr2Data(client, today);
+          break;
+        case 'triple':
+          await fetchTripleData(client, today);
           break;
         default:
           // This case should ideally not be reached due to the check in 'on message'
