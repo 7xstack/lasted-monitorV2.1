@@ -183,7 +183,7 @@ export default function PreviewErPage() {
     <div className={styles.container} style={{ fontFamily }}>
       <div className={`${styles.contentWrapper} ${isTransitioning ? (slideDirection === 'left' ? styles.slideOutLeft : styles.slideOutRight) : ''}`}>
         {renderContent()}
-      </div>
+          </div>
       
       {isFading && (
         <div className={`${styles.contentWrapper} ${slideDirection === 'left' ? styles.slideInFromRight : styles.slideInFromLeft}`}>

@@ -14,6 +14,130 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
   const queueListContainerRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Normal Mode: เรียงลำดับ visitData ถ้าเปิด arr_r (table_arr2)
+  const sortedVisitData = setting.table_arr2 === 'true' 
+    ? [...visitData].sort((a, b) => {
+        // ระดับที่ 1: เรียงตาม priority_rate DESC (สูงสุดก่อน)
+        const priorityA = a.priority_rate ?? 0;
+        const priorityB = b.priority_rate ?? 0;
+        
+        if (priorityA !== priorityB) {
+          return priorityB - priorityA; // DESC: สูงสุดก่อน
+        }
+        
+        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม check_in DESC (ใหม่สุดก่อน)
+        // ใช้ check_in เป็นหลัก ถ้าไม่มีใช้ time_call
+        let checkInTimeA = 0;
+        let checkInTimeB = 0;
+        
+        // ลองใช้ check_in ก่อน
+        if (a.check_in) {
+          const checkInA = typeof a.check_in === 'string' ? a.check_in : null;
+          if (checkInA) {
+            const parsedDateA = new Date(checkInA);
+            if (!isNaN(parsedDateA.getTime())) {
+              checkInTimeA = parsedDateA.getTime();
+            }
+          }
+        }
+        
+        if (b.check_in) {
+          const checkInB = typeof b.check_in === 'string' ? b.check_in : null;
+          if (checkInB) {
+            const parsedDateB = new Date(checkInB);
+            if (!isNaN(parsedDateB.getTime())) {
+              checkInTimeB = parsedDateB.getTime();
+            }
+          }
+        }
+        
+        // ถ้าไม่มี check_in ให้ใช้ time_call
+        if (checkInTimeA === 0 && a.time_call) {
+          const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
+          if (timeCallA) {
+            const parsedDateA = new Date(timeCallA);
+            if (!isNaN(parsedDateA.getTime())) {
+              checkInTimeA = parsedDateA.getTime();
+            }
+          }
+        }
+        
+        if (checkInTimeB === 0 && b.time_call) {
+          const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
+          if (timeCallB) {
+            const parsedDateB = new Date(timeCallB);
+            if (!isNaN(parsedDateB.getTime())) {
+              checkInTimeB = parsedDateB.getTime();
+            }
+          }
+        }
+        
+        return checkInTimeB - checkInTimeA; // DESC: ใหม่สุดก่อน
+      })
+    : visitData;
+  
+  // Auto scroll เมื่อคิวเกิน 24 คิว (เฉพาะ queue type)
+  useEffect(() => {
+    // ไม่ทำงานใน lock_position mode
+    if (setting.lock_position === "true" && setting.station_l) {
+      return;
+    }
+    
+    if (setting.type !== 'queue' || !queueListContainerRef.current) return;
+
+    const container = queueListContainerRef.current;
+    const queueCount = sortedVisitData.length;
+
+    // ถ้าคิวเกิน 24 คิว ให้เริ่ม auto scroll
+    if (queueCount > 24) {
+      let scrollPosition = 0;
+      const scrollSpeed = 0.4; // pixels per frame (ช้าลง)
+      const scrollDelay = 50; // milliseconds (ช้าลง)
+      let isPaused = false; // flag สำหรับหยุดชั่วคราว
+
+      const scroll = () => {
+        if (!container || isPaused) return;
+        
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        
+        // ถ้า scroll ถึงล่างสุด ให้หยุดและหน่วงเวลา 5 วินาที
+        if (scrollPosition >= maxScroll) {
+          isPaused = true;
+          scrollPosition = 0;
+          container.scrollTop = 0;
+          
+          // หน่วงเวลา 5 วินาที แล้วเริ่ม scroll ใหม่
+          setTimeout(() => {
+            isPaused = false;
+          }, 5000); // 5 วินาที
+        } else {
+          scrollPosition += scrollSpeed;
+          container.scrollTop = scrollPosition;
+        }
+      };
+
+      // เริ่ม auto scroll
+      scrollIntervalRef.current = setInterval(scroll, scrollDelay);
+    } else {
+      // ถ้าคิวไม่เกิน 24 คิว ให้หยุด scroll และ reset position
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+      if (container) {
+        container.scrollTop = 0;
+      }
+    }
+
+    // Cleanup
+    return () => {
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+    };
+  }, [sortedVisitData.length, setting.type, setting.lock_position, setting.station_l]);
+  
   // Lock Position Mode: แสดงผลแบบ Card แนวตั้ง
   if (setting.lock_position === "true" && setting.station_l) {
     // แยกสถานีจาก station_l
@@ -80,126 +204,6 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
     );
   }
   
-  // Normal Mode: แสดงตารางแบบปกติ
-  // เรียงลำดับ visitData ถ้าเปิด arr_r (table_arr2)
-  const sortedVisitData = setting.table_arr2 === 'true' 
-    ? [...visitData].sort((a, b) => {
-        // ระดับที่ 1: เรียงตาม priority_rate DESC (สูงสุดก่อน)
-        const priorityA = a.priority_rate ?? 0;
-        const priorityB = b.priority_rate ?? 0;
-        
-        if (priorityA !== priorityB) {
-          return priorityB - priorityA; // DESC: สูงสุดก่อน
-        }
-        
-        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม check_in DESC (ใหม่สุดก่อน)
-        // ใช้ check_in เป็นหลัก ถ้าไม่มีใช้ time_call
-        let checkInTimeA = 0;
-        let checkInTimeB = 0;
-        
-        // ลองใช้ check_in ก่อน
-        if (a.check_in) {
-          const checkInA = typeof a.check_in === 'string' ? a.check_in : null;
-          if (checkInA) {
-            const parsedDateA = new Date(checkInA);
-            if (!isNaN(parsedDateA.getTime())) {
-              checkInTimeA = parsedDateA.getTime();
-            }
-          }
-        }
-        
-        if (b.check_in) {
-          const checkInB = typeof b.check_in === 'string' ? b.check_in : null;
-          if (checkInB) {
-            const parsedDateB = new Date(checkInB);
-            if (!isNaN(parsedDateB.getTime())) {
-              checkInTimeB = parsedDateB.getTime();
-            }
-          }
-        }
-        
-        // ถ้าไม่มี check_in ให้ใช้ time_call
-        if (checkInTimeA === 0 && a.time_call) {
-          const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
-          if (timeCallA) {
-            const parsedDateA = new Date(timeCallA);
-            if (!isNaN(parsedDateA.getTime())) {
-              checkInTimeA = parsedDateA.getTime();
-            }
-          }
-        }
-        
-        if (checkInTimeB === 0 && b.time_call) {
-          const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
-          if (timeCallB) {
-            const parsedDateB = new Date(timeCallB);
-            if (!isNaN(parsedDateB.getTime())) {
-              checkInTimeB = parsedDateB.getTime();
-            }
-          }
-        }
-        
-        return checkInTimeB - checkInTimeA; // DESC: ใหม่สุดก่อน
-      })
-    : visitData;
-  
-  // Auto scroll เมื่อคิวเกิน 24 คิว (เฉพาะ queue type)
-  useEffect(() => {
-    if (setting.type !== 'queue' || !queueListContainerRef.current) return;
-
-    const container = queueListContainerRef.current;
-    const queueCount = sortedVisitData.length;
-
-    // ถ้าคิวเกิน 24 คิว ให้เริ่ม auto scroll
-    if (queueCount > 24) {
-      let scrollPosition = 0;
-      const scrollSpeed = 0.4; // pixels per frame (ช้าลง)
-      const scrollDelay = 50; // milliseconds (ช้าลง)
-      let isPaused = false; // flag สำหรับหยุดชั่วคราว
-
-      const scroll = () => {
-        if (!container || isPaused) return;
-        
-        const maxScroll = container.scrollHeight - container.clientHeight;
-        
-        // ถ้า scroll ถึงล่างสุด ให้หยุดและหน่วงเวลา 5 วินาที
-        if (scrollPosition >= maxScroll) {
-          isPaused = true;
-          scrollPosition = 0;
-          container.scrollTop = 0;
-          
-          // หน่วงเวลา 5 วินาที แล้วเริ่ม scroll ใหม่
-          setTimeout(() => {
-            isPaused = false;
-          }, 5000); // 5 วินาที
-        } else {
-          scrollPosition += scrollSpeed;
-          container.scrollTop = scrollPosition;
-        }
-      };
-
-      // เริ่ม auto scroll
-      scrollIntervalRef.current = setInterval(scroll, scrollDelay);
-    } else {
-      // ถ้าคิวไม่เกิน 24 คิว ให้หยุด scroll และ reset position
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-      if (container) {
-        container.scrollTop = 0;
-      }
-    }
-
-    // Cleanup
-    return () => {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-    };
-  }, [sortedVisitData.length, setting.type]);
-  
   // ถ้า type เป็น queue ให้แสดงเป็น div layout แทนตาราง
   if (setting.type === 'queue') {
     return (
@@ -244,7 +248,7 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
       </section>
     );
   }
-
+  
   return (
     <section className={styles.interviewSection}>
       <div className={styles.sectionHeader}>

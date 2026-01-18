@@ -793,7 +793,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
         return prev.filter(s => s !== stationName);
       } else {
         return [...prev, stationName];
-      }
+    }
     });
   };
 
@@ -1518,7 +1518,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                           } else {
                             setShowDepartmentPopup(true);
                           }
-                        }}
+                          }}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-left bg-white hover:bg-slate-50"
                       >
                         {leftDepartmentNames.length > 0 
@@ -1526,8 +1526,9 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                           : 'เลือกแผนก'}
                         </button>
                     </div>
-
+                        
                     {/* Station Selection */}
+                    {payload.type !== 'queue_only' && (
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-slate-700 mb-2">
                         เลือก Station (ซ้าย)
@@ -1550,7 +1551,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                             <span>ไม่พบ Station สำหรับแผนกนี้</span>
                           </div>
                         </div>
-                      ) : (
+                              ) : (
                         <div className="space-y-2 max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-white">
                           {(() => {
                             // จัดกลุ่ม stations ตามแผนก
@@ -1607,8 +1608,9 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                             });
                           })()}
                           </div>
+                              )}
+                          </div>
                         )}
-                      </div>
 
                     {/* Department ID Display */}
                     <div className="mt-4">
@@ -1738,7 +1740,7 @@ export default function EditSettingPage({ params }: { params: Promise<{ id: stri
                               <span>ไม่พบ Station สำหรับแผนกนี้</span>
                             </div>
                           </div>
-                        ) : (
+                                ) : (
                           <div className="space-y-2 max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-white">
                             {(() => {
                               // จัดกลุ่ม stations ตามแผนก

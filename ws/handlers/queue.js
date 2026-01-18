@@ -60,7 +60,7 @@ async function fetchQueueData(client, today) {
     // 2. Prepare the IN clause from the string
     const departments = departmentLoadString.split(",").map((d) => d.trim());
     const deptPlaceholders = departments.map((_, i) => `@dept${i}`).join(",");
-
+    
     // A helper function to create and configure a request
     const createRequest = () => {
       const request = pool.request();
@@ -74,7 +74,7 @@ async function fetchQueueData(client, today) {
 
     // 3. Use the placeholders in the queries
     const waitQuery = `
-SELECT
+      SELECT 
     T1.*,
     T2.priority_rate,
     T2.Urgent_Level as urgent_level,

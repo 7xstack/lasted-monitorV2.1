@@ -143,6 +143,23 @@
   position: relative;
   overflow: hidden;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.interviewTableContainer {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 200px);
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+  /* ซ่อน scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.interviewTableContainer::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 /* Middle Column - Active Patients */
 .activeSection {

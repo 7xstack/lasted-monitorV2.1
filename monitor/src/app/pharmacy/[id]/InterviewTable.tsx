@@ -1,4 +1,5 @@
 import { Hash, User } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import styles from './page.module.css';
 import { Setting, VisitInfo } from './types';
 import { formatPatientName, splitQueueNumber } from './utils';
@@ -10,6 +11,157 @@ interface InterviewTableProps {
 
 export default function InterviewTable({ setting, visitData }: InterviewTableProps) {
   console.log(visitData);
+  
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
+  const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Normal Mode: เรียงลำดับ visitData ถ้าเปิด arr_r (table_arr2)
+  const sortedVisitData = setting.table_arr2 === 'true' 
+    ? [...visitData].sort((a, b) => {
+        // ระดับที่ 1: เรียงตาม priority_rate DESC (สูงสุดก่อน)
+        const priorityA = a.priority_rate ?? 0;
+        const priorityB = b.priority_rate ?? 0;
+        
+        if (priorityA !== priorityB) {
+          return priorityB - priorityA; // DESC: สูงสุดก่อน
+        }
+        
+        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม check_in DESC (ใหม่สุดก่อน)
+        // ใช้ check_in เป็นหลัก ถ้าไม่มีใช้ time_call
+        let checkInTimeA = 0;
+        let checkInTimeB = 0;
+        
+        // ลองใช้ check_in ก่อน
+        if (a.check_in) {
+          const checkInA = typeof a.check_in === 'string' ? a.check_in : null;
+          if (checkInA) {
+            const parsedDateA = new Date(checkInA);
+            if (!isNaN(parsedDateA.getTime())) {
+              checkInTimeA = parsedDateA.getTime();
+            }
+          }
+        }
+        
+        if (b.check_in) {
+          const checkInB = typeof b.check_in === 'string' ? b.check_in : null;
+          if (checkInB) {
+            const parsedDateB = new Date(checkInB);
+            if (!isNaN(parsedDateB.getTime())) {
+              checkInTimeB = parsedDateB.getTime();
+            }
+          }
+        }
+        
+        // ถ้าไม่มี check_in ให้ใช้ time_call
+        if (checkInTimeA === 0 && a.time_call) {
+          const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
+          if (timeCallA) {
+            const parsedDateA = new Date(timeCallA);
+            if (!isNaN(parsedDateA.getTime())) {
+              checkInTimeA = parsedDateA.getTime();
+            }
+          }
+        }
+        
+        if (checkInTimeB === 0 && b.time_call) {
+          const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
+          if (timeCallB) {
+            const parsedDateB = new Date(timeCallB);
+            if (!isNaN(parsedDateB.getTime())) {
+              checkInTimeB = parsedDateB.getTime();
+            }
+          }
+        }
+        
+        return checkInTimeB - checkInTimeA; // DESC: ใหม่สุดก่อน
+      })
+    : visitData;
+
+  // Auto scroll เมื่อคิวเกิน 6 คิว (เฉพาะ pharmacy type และไม่ใช่ lock_position mode)
+  useEffect(() => {
+    // ตรวจสอบเงื่อนไขก่อน
+    if (setting.type !== 'pharmacy' && setting.type !== 'Pharmacy') {
+      return;
+    }
+    
+    // ไม่ทำงานใน lock_position mode
+    if (setting.lock_position === "true" && setting.station_l) {
+      return;
+    }
+
+    const queueCount = sortedVisitData.length;
+    console.log('[AutoScroll] Pharmacy InterviewTable - queueCount:', queueCount, 'setting.type:', setting.type);
+
+    // รอให้ table body render ก่อน
+    const timer = setTimeout(() => {
+      if (!tableBodyRef.current) {
+        console.log('[AutoScroll] Pharmacy InterviewTable - Table body not found');
+        return;
+      }
+
+      // หา table container (interviewTableContainer)
+      const tableContainer = tableBodyRef.current.closest(`.${styles.interviewTableContainer}`);
+      if (!tableContainer) {
+        console.log('[AutoScroll] Pharmacy InterviewTable - Table container not found');
+        return;
+      }
+
+      // ถ้าคิวเกิน 6 คิว ให้เริ่ม auto scroll
+      if (queueCount > 6) {
+        let scrollPosition = 0;
+        const scrollSpeed = 0.4; // pixels per frame (ช้าลง)
+        const scrollDelay = 50; // milliseconds (ช้าลง)
+        let isPaused = false; // flag สำหรับหยุดชั่วคราว
+
+        const scroll = () => {
+          if (!tableContainer || isPaused) return;
+          
+          const maxScroll = tableContainer.scrollHeight - tableContainer.clientHeight;
+          
+          // ถ้าไม่มี content ที่ scroll ได้ ให้ไม่ทำอะไร
+          if (maxScroll <= 0) return;
+          
+          // ถ้า scroll ถึงล่างสุด ให้หยุดและหน่วงเวลา 5 วินาที
+          if (scrollPosition >= maxScroll) {
+            isPaused = true;
+            scrollPosition = 0;
+            tableContainer.scrollTop = 0;
+            
+            // หน่วงเวลา 5 วินาที แล้วเริ่ม scroll ใหม่
+            setTimeout(() => {
+              isPaused = false;
+            }, 5000); // 5 วินาที
+          } else {
+            scrollPosition += scrollSpeed;
+            tableContainer.scrollTop = scrollPosition;
+          }
+        };
+
+        console.log('[AutoScroll] Pharmacy InterviewTable - Starting auto scroll for', queueCount, 'rows');
+        // เริ่ม auto scroll
+        scrollIntervalRef.current = setInterval(scroll, scrollDelay);
+      } else {
+        // ถ้าคิวไม่เกิน 6 คิว ให้หยุด scroll และ reset position
+        if (scrollIntervalRef.current) {
+          clearInterval(scrollIntervalRef.current);
+          scrollIntervalRef.current = null;
+        }
+        const tableContainer = tableBodyRef.current.closest(`.${styles.interviewTableContainer}`);
+        if (tableContainer) {
+          tableContainer.scrollTop = 0;
+        }
+      }
+    }, 100); // รอ 100ms เพื่อให้ DOM render เสร็จ
+
+    // Cleanup
+    return () => {
+      clearTimeout(timer);
+      if (scrollIntervalRef.current) {
+        clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+      }
+    };
+  }, [sortedVisitData.length, setting.type, setting.lock_position, setting.station_l]);
   
   // Lock Position Mode: แสดงผลแบบ Card แนวตั้ง
   if (setting.lock_position === "true" && setting.station_l) {
@@ -77,77 +229,8 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
     );
   }
   
-  // Normal Mode: แสดงตารางแบบปกติ
-  // เรียงลำดับ visitData ถ้าเปิด arr_r (table_arr2)
-  const sortedVisitData = setting.table_arr2 === 'true' 
-    ? [...visitData].sort((a, b) => {
-        // ระดับที่ 1: เรียงตาม priority_rate DESC (สูงสุดก่อน)
-        const priorityA = a.priority_rate ?? 0;
-        const priorityB = b.priority_rate ?? 0;
-        
-        if (priorityA !== priorityB) {
-          return priorityB - priorityA; // DESC: สูงสุดก่อน
-        }
-        
-        // ระดับที่ 2: ถ้า priority_rate เท่ากัน ให้เรียงตาม check_in DESC (ใหม่สุดก่อน)
-        // ใช้ check_in เป็นหลัก ถ้าไม่มีใช้ time_call
-        let checkInTimeA = 0;
-        let checkInTimeB = 0;
-        
-        // ลองใช้ check_in ก่อน
-        if (a.check_in) {
-          const checkInA = typeof a.check_in === 'string' ? a.check_in : null;
-          if (checkInA) {
-            const parsedDateA = new Date(checkInA);
-            if (!isNaN(parsedDateA.getTime())) {
-              checkInTimeA = parsedDateA.getTime();
-            }
-          }
-        }
-        
-        if (b.check_in) {
-          const checkInB = typeof b.check_in === 'string' ? b.check_in : null;
-          if (checkInB) {
-            const parsedDateB = new Date(checkInB);
-            if (!isNaN(parsedDateB.getTime())) {
-              checkInTimeB = parsedDateB.getTime();
-            }
-          }
-        }
-        
-        // ถ้าไม่มี check_in ให้ใช้ time_call
-        if (checkInTimeA === 0 && a.time_call) {
-          const timeCallA = typeof a.time_call === 'string' ? a.time_call : null;
-          if (timeCallA) {
-            const parsedDateA = new Date(timeCallA);
-            if (!isNaN(parsedDateA.getTime())) {
-              checkInTimeA = parsedDateA.getTime();
-            }
-          }
-        }
-        
-        if (checkInTimeB === 0 && b.time_call) {
-          const timeCallB = typeof b.time_call === 'string' ? b.time_call : null;
-          if (timeCallB) {
-            const parsedDateB = new Date(timeCallB);
-            if (!isNaN(parsedDateB.getTime())) {
-              checkInTimeB = parsedDateB.getTime();
-            }
-          }
-        }
-        
-        return checkInTimeB - checkInTimeA; // DESC: ใหม่สุดก่อน
-      })
-    : visitData;
-  
-  return (
-    <section className={styles.interviewSection}>
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>
-          {setting.n_table || 'จุดซักประวัติ'}
-        </h2>
-      </div>
-      
+  // สำหรับ pharmacy type ใช้ container wrapper
+  const tableContent = (
       <table className={styles.interviewTable}>
         <thead>
           <tr>
@@ -188,7 +271,7 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
             )}
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={tableBodyRef}>
           {sortedVisitData.length > 0 ? (
             sortedVisitData.map((visit, index) => (
               <tr key={visit.id || index} className={styles.tableRow}>
@@ -285,6 +368,23 @@ export default function InterviewTable({ setting, visitData }: InterviewTablePro
           )}
         </tbody>
       </table>
+  );
+
+  return (
+    <section className={styles.interviewSection}>
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
+          {setting.n_table || 'จุดซักประวัติ'}
+        </h2>
+      </div>
+      
+      {(setting.type === 'pharmacy' || setting.type === 'Pharmacy') ? (
+        <div className={styles.interviewTableContainer}>
+          {tableContent}
+        </div>
+      ) : (
+        tableContent
+      )}
     </section>
   );
 }

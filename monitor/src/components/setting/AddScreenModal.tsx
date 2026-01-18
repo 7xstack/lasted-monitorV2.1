@@ -308,8 +308,8 @@ export default function AddScreenModal({
           if (allDepartments.length > 0) {
             const selectedDepts = allDepartments.filter((d) => codes.includes(String(d.code)));
             setRightDepartmentNames(selectedDepts);
+            }
           }
-        }
       }
     }
   }, [isOpen, currentStep, payload.type]); // ลบ payload.query_left และ payload.query_right ออกเพื่อป้องกันการทำงานซ้ำเมื่อเปลี่ยนแผนก (จะจัดการใน useEffect อื่นแล้ว)
@@ -433,9 +433,9 @@ export default function AddScreenModal({
     console.log('[Station Update] stationValue:', stationValue);
     setPayload(prev => {
       const newPayload = {
-        ...prev, 
-        station_left: stationValue,
-        amount_left: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
+      ...prev, 
+      station_left: stationValue,
+      amount_left: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
       };
       console.log('[Station Update] Updating payload.station_left:', newPayload.station_left);
       return newPayload;
@@ -451,9 +451,9 @@ export default function AddScreenModal({
     console.log('[Station Update] stationValue (right):', stationValue);
     setPayload(prev => {
       const newPayload = {
-        ...prev, 
-        station_right: stationValue,
-        amount_right: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
+      ...prev, 
+      station_right: stationValue,
+      amount_right: filteredStations.length // อัปเดตจำนวนห้องตามจำนวน station ที่เลือก
       };
       console.log('[Station Update] Updating payload.station_right:', newPayload.station_right);
       return newPayload;
@@ -588,15 +588,15 @@ export default function AddScreenModal({
                   </div>
 
                   {payload.type !== 'drug' && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
-                      <input
-                        type="text"
-                        value={payload.head_left}
-                        onChange={(e) => setPayload(prev => ({ ...prev, head_left: e.target.value }))}
-                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">หัวกำลังรับบริการ (ซ้าย)</label>
+                    <input
+                      type="text"
+                      value={payload.head_left}
+                      onChange={(e) => setPayload(prev => ({ ...prev, head_left: e.target.value }))}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all"
+                    />
+                  </div>
                   )}
 
                   {payload.type === 'duo' && (
@@ -731,6 +731,7 @@ export default function AddScreenModal({
                       )}
 
                       {/* Station Selection */}
+                      {payload.type !== 'queue_only' && (
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                           เลือก Station (ซ้าย)
@@ -788,22 +789,22 @@ export default function AddScreenModal({
                                     {/* Stations ของแผนกนี้ */}
                                     <div className="space-y-1">
                                       {stations.map((station, index) => {
-                                        const isSelected = selectedLeftStations.includes(station.station_name);
-                                        return (
-                                          <label
+                              const isSelected = selectedLeftStations.includes(station.station_name);
+                              return (
+                                <label
                                             key={`left-station-${deptCode}-${index}-${station.station_name}`}
-                                            className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
-                                          >
-                                            <input
-                                              type="checkbox"
-                                              checked={isSelected}
-                                              onChange={() => handleLeftStationToggle(station.station_name)}
-                                              className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
-                                            />
-                                            <span className="text-sm text-slate-700">{station.station_name}</span>
-                                          </label>
-                                        );
-                                      })}
+                                  className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleLeftStationToggle(station.station_name)}
+                                    className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
+                                  />
+                                  <span className="text-sm text-slate-700">{station.station_name}</span>
+                                </label>
+                              );
+                            })}
                                     </div>
                                   </div>
                                 );
@@ -812,6 +813,7 @@ export default function AddScreenModal({
                           </div>
                         )}
                       </div>
+                      )}
 
                       <div className="mt-4">
                         <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -942,22 +944,22 @@ export default function AddScreenModal({
                                       {/* Stations ของแผนกนี้ */}
                                       <div className="space-y-1">
                                         {stations.map((station, index) => {
-                                          const isSelected = selectedRightStations.includes(station.station_name);
-                                          return (
-                                            <label
+                                const isSelected = selectedRightStations.includes(station.station_name);
+                                return (
+                                  <label
                                               key={`right-station-${deptCode}-${index}-${station.station_name}`}
-                                              className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
-                                            >
-                                              <input
-                                                type="checkbox"
-                                                checked={isSelected}
-                                                onChange={() => handleRightStationToggle(station.station_name)}
-                                                className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
-                                              />
-                                              <span className="text-sm text-slate-700">{station.station_name}</span>
-                                            </label>
-                                          );
-                                        })}
+                                    className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition-colors"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => handleRightStationToggle(station.station_name)}
+                                      className="w-5 h-5 text-blue-600 border-blue-300 rounded focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span className="text-sm text-slate-700">{station.station_name}</span>
+                                  </label>
+                                );
+                              })}
                                       </div>
                                     </div>
                                   );
@@ -1455,7 +1457,7 @@ export default function AddScreenModal({
         onSelect={(selectedStations: string[]) => {
           console.log('[Station Select] onSelect called with:', selectedStations);
           console.log('[Station Select] Setting selectedLeftStations to:', selectedStations);
-      setSelectedLeftStations(selectedStations);
+          setSelectedLeftStations(selectedStations);
       console.log('[Station Select] selectedLeftStations state will be updated');
         }}
         availableStations={leftStations}

@@ -425,7 +425,7 @@ export default function SinglePage({
   useEffect(() => {
     if (!currentDisplayId || !audioUnlocked) return;
 
-    const wsUrl = `ws://localhost:1100/ws/`;
+    const wsUrl = `wss://monitor.aztecthstudio.com/ws/`;
     const ws = new WebSocket(wsUrl);
     
     // เก็บ WebSocket instance เพื่อตรวจสอบว่า message มาจาก connection นี้หรือไม่

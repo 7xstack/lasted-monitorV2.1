@@ -323,8 +323,8 @@ export default function SinglePage({
         clearTimeout(timeoutId);
       };
     } else {
-      // Initial load - fetch ทันที
-      fetchSetting();
+    // Initial load - fetch ทันที
+    fetchSetting();
     }
     
     // Refresh setting ทุก 3 นาที
@@ -421,7 +421,7 @@ export default function SinglePage({
   useEffect(() => {
     if (!currentDisplayId || !audioUnlocked) return;
 
-    const wsUrl = `ws://localhost:1100/ws/`;
+    const wsUrl = `wss://monitor.aztecthstudio.com/ws/`;
     const ws = new WebSocket(wsUrl);
     
     // เก็บ WebSocket instance เพื่อตรวจสอบว่า message มาจาก connection นี้หรือไม่
@@ -679,7 +679,7 @@ export default function SinglePage({
             </div>
           ) : null;
         })()}
-        <InterviewTable setting={setting} visitData={visitData} />
+      <InterviewTable setting={setting} visitData={visitData} />
         {/* แสดงรูปโฆษณาฝั่งขวา (ads_type = 'right') */}
         {(() => {
           const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');

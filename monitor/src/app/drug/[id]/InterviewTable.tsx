@@ -246,55 +246,55 @@ export default function InterviewTable({ setting, visitData, sectionTitle }: Int
     );
   }
   
-    return (
-      <section className={styles.interviewSection}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>
+  return (
+    <section className={styles.interviewSection}>
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
             {sectionTitle || setting.n_table || 'จุดซักประวัติ'}
-          </h2>
-        </div>
+        </h2>
+      </div>
       
       <table className={styles.interviewTable}>
         {setting.type !== 'drug' && (
-          <thead>
-            <tr>
+        <thead>
+          <tr>
+            <th className={styles.tableHeader}>
+              <div className={styles.headerItem}>
+                <Hash className={styles.headerIcon} size={20} />
+                <span>หมายเลข</span>
+              </div>
+            </th>
+            {setting.stem_surname_table !== 'name' && (
               <th className={styles.tableHeader}>
                 <div className={styles.headerItem}>
-                  <Hash className={styles.headerIcon} size={20} />
-                  <span>หมายเลข</span>
+                  <User className={styles.headerIcon} size={20} />
+                  <span>ชื่อ-นามสกุล</span>
                 </div>
               </th>
-              {setting.stem_surname_table !== 'name' && (
-                <th className={styles.tableHeader}>
-                  <div className={styles.headerItem}>
-                    <User className={styles.headerIcon} size={20} />
-                    <span>ชื่อ-นามสกุล</span>
-                  </div>
-                </th>
-              )}
-              {setting.time_col === 'true' && (
-                <th className={styles.tableHeader}>
-                  <div className={styles.headerItem}>
-                    <span>เวลารอ</span>
-                  </div>
-                </th>
-              )}
-              {setting.urgent_level === 'true' && (
-                <th className={styles.tableHeader}>
-                  <div className={styles.headerItem}>
-                    <span>ระดับความเร่งด่วน</span>
-                  </div>
-                </th>
-              )}
-              {setting.status_patient === 'true' && (
-                <th className={styles.tableHeader}>
-                  <div className={styles.headerItem}>
-                    <span>สถานะ</span>
-                  </div>
-                </th>
-              )}
-            </tr>
-          </thead>
+            )}
+            {setting.time_col === 'true' && (
+              <th className={styles.tableHeader}>
+                <div className={styles.headerItem}>
+                  <span>เวลารอ</span>
+                </div>
+              </th>
+            )}
+            {setting.urgent_level === 'true' && (
+              <th className={styles.tableHeader}>
+                <div className={styles.headerItem}>
+                  <span>ระดับความเร่งด่วน</span>
+                </div>
+              </th>
+            )}
+            {setting.status_patient === 'true' && (
+              <th className={styles.tableHeader}>
+                <div className={styles.headerItem}>
+                  <span>สถานะ</span>
+                </div>
+              </th>
+            )}
+          </tr>
+        </thead>
         )}
         <tbody>
           {sortedVisitData.length > 0 ? (

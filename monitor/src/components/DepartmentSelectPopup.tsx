@@ -53,9 +53,9 @@ export default function DepartmentSelectPopup({
           setDepartments(cachedDepartments);
         } else {
           // Only fetch if cache doesn't exist
-          fetchDepartments();
+      fetchDepartments();
         }
-        setDepartmentSearch('');
+      setDepartmentSearch('');
         isInitializedRef.current = false;
       } else if (isOpen) {
         // When popup is already open, sync with cache if state is empty
@@ -241,9 +241,9 @@ export default function DepartmentSelectPopup({
                 const normalizedDeptCode = String(dept.code);
                 const isSelected = selectedDeptCodes.includes(normalizedDeptCode);
                 return (
-                  <button
+                <button
                     key={normalizedDeptCode}
-                    type="button"
+                  type="button"
                     onClick={() => handleToggle(dept)}
                     className={`w-full px-4 py-3 text-left border rounded-xl transition-all flex items-center gap-3 ${
                       isSelected && multiSelect
@@ -263,14 +263,14 @@ export default function DepartmentSelectPopup({
                       </div>
                     )}
                     <div className="flex-1">
-                      <div className="font-medium text-slate-800">
-                        {dept.name}
+                  <div className="font-medium text-slate-800">
+                    {dept.name}
                       </div>
                       {multiSelect && (
                         <div className="text-xs text-slate-500">Code: {dept.code}</div>
                       )}
-                    </div>
-                  </button>
+                  </div>
+                </button>
                 );
               })}
               {filteredDepartments.length === 0 && !isLoading && (

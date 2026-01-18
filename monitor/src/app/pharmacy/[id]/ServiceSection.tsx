@@ -154,13 +154,13 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames, 
       return sortedStations.map((stationName, index) => {
         const activePatients = findActivePatients(stationName);
         return (
-          <ServiceCard
-            key={index}
-            setting={setting}
-            stationName={stationName}
+        <ServiceCard
+          key={index}
+          setting={setting}
+          stationName={stationName}
             activePatients={activePatients}
-            hideNumber={hideNumber}
-          />
+          hideNumber={hideNumber}
+        />
         );
       });
     }
@@ -170,13 +170,13 @@ export default function ServiceSection({ setting, sortedActiveData, tableNames, 
       return tableNames.map((tableName, index) => {
         const activePatients = findActivePatients(tableName);
         return (
-          <ServiceCard
-            key={index}
-            setting={setting}
-            stationName={tableName.trim()}
+        <ServiceCard
+          key={index}
+          setting={setting}
+          stationName={tableName.trim()}
             activePatients={activePatients}
-            hideNumber={hideNumber}
-          />
+          hideNumber={hideNumber}
+        />
         );
       });
     }
