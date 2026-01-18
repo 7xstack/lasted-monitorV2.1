@@ -80,10 +80,9 @@ const mockSwapSetting: Setting = {
 };
 
 // Map pageId → type
-const pageTypeMap: { [key: string]: 'single' | 'duo' | 'er' } = {
+const pageTypeMap: { [key: string]: 'single' } = {
   '1': 'single',
   '2': 'single',
-  '3': 'er',
 };
 
 interface SwapSetting extends Omit<Setting, 'time_wait' | 'listPage'> {
@@ -283,14 +282,10 @@ export default function PreviewSwapPage({ params }: { params: Promise<{ id: stri
       // ใช้ key เพื่อให้ React re-render เมื่อเปลี่ยนหน้า
       switch (currentPageType) {
         case 'single':
-          return <PreviewSingle key={`single-${displayId}-${currentPageIndex}`} />;
-        case 'duo':
-          return <PreviewDuo key={`duo-${displayId}-${currentPageIndex}`} />;
-        case 'er':
-          return <PreviewEr key={`er-${displayId}-${currentPageIndex}`} />;
+          return <PreviewSingle key={`single-${displayId}-${currentPageIndex}`} pageId={displayId} />;
         default:
           console.warn('[Preview Swap] Unknown type, defaulting to single:', currentPageType);
-          return <PreviewSingle key={`single-default-${currentPageIndex}`} />;
+          return <PreviewSingle key={`single-default-${currentPageIndex}`} pageId={displayId} />;
       }
     } catch (err) {
       console.error('[Preview Swap] Error rendering preview:', err);

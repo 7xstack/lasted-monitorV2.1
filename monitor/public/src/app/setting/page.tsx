@@ -491,7 +491,7 @@ export default function SettingPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: '#043566' }}>การตั้งค่าระบบ</h1>
-                <p className="text-sm text-slate-600 mt-1">จัดการการตั้งค่าหน้าจอแสดงผล V3.0.0-beta.20251223</p>
+                <p className="text-sm text-slate-600 mt-1">จัดการการตั้งค่าหน้าจอแสดงผล  V3.0.0-beta.20251224</p>
               </div>
             </div>
             <Link

@@ -10,21 +10,21 @@ const monitorConfigs = [
     key: "single",
     title: "Single Monitor",
     description: "จอคอลัมน์เดียว เหมาะสำหรับการติดตั้งจุดบริการแบบ Standalone",
-    href: "/single/1",
+    href: "/preview/single",
     icon: <Monitor className="h-8 w-8 text-sky-400" />,
   },
   {
     key: "duo",
     title: "Duo Monitor",
     description: "แยกข้อมูลเป็นสองฝั่ง เหมาะกับพื้นที่กลางห้องรอ",
-    href: "/duo/1",
+    href: "/preview/duo",
     icon: <Rows className="h-8 w-8 text-sky-400" />,
   },
   {
     key: "er",
     title: "ER Monitor",
     description: "รองรับสถานี ER-A ถึง ER-E พร้อมแจ้งเตือนพิเศษ",
-    href: "/er/1",
+    href: "/preview/er",
     icon: <AlertTriangle className="h-8 w-8 text-sky-400" />,
   },
   {
@@ -45,7 +45,7 @@ const MonitorSelection = React.forwardRef<HTMLDivElement>((props, ref) => {
             เลือกประเภทหน้าจอ
           </h2>
           <p className="mt-4 text-lg leading-8 text-slate-300">
-            เลือกระบบแสดงผลให้เหมาะกับพื้นที่และการใช้งานของคุณ
+            เรียนรู้ระบบแสดงผลให้เหมาะกับพื้นที่และการใช้งานของคุณ
           </p>
         </div>
         <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4">
@@ -67,7 +67,7 @@ const MonitorSelection = React.forwardRef<HTMLDivElement>((props, ref) => {
                 </div>
                 <p className="mt-4 text-slate-300">{monitor.description}</p>
                 <div className="mt-6 flex items-center gap-2 font-semibold text-sky-400">
-                  <span>เปิด Monitor</span>
+                  <span>รายละเอียดเพิ่มเติม</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </div>
               </Link>

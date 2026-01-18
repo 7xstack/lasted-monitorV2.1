@@ -61,7 +61,8 @@ export const splitQueueNumber = (queueNo: string | number | null | undefined) =>
   
   const queueStr = String(queueNo);
   const letter = queueStr.replace(/\d+$/, '');
-  const number = queueStr.match(/\d+$/)?.[0] || '-';
+  const numberRaw = queueStr.match(/\d+$/)?.[0] || '-';
+  const number = numberRaw !== '-' ? String(parseInt(numberRaw, 10)) : '-';
   
   return { letter, number };
 };

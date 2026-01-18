@@ -31,7 +31,7 @@ const swaggerSpec = {
 	},
 	servers: [
 		{
-			url: 'http://localhost:2000',
+			url: 'https://voice.aztecthstudio.com',
 			description: 'Production server'
 		}
 	],

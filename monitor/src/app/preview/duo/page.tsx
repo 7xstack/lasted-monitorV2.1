@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../../duo/[id]/page.module.css';
 import Header from '../../duo/[id]/Header';
 import InterviewTable from '../../duo/[id]/InterviewTable';
@@ -13,7 +13,7 @@ import { Setting, VisitInfo } from '../../duo/[id]/types';
 const mockSetting: Setting = {
   id: 1,
   department: "ตรวจโรคทั่วไป",
-  n_hospital: "โรงพยาบาลชนบท",
+  n_hospital: "โรงพยาบาลแอซเท็ก",
   n_room: "",
   n_table: "จุดซักประวัติ (ซ้าย)",
   n_table_r: "จุดซักประวัติ (ขวา)",
@@ -21,13 +21,13 @@ const mockSetting: Setting = {
   n_listroom: "",
   department_load: "1",
   department_room_load: "2",
-  time_col: "true",
+  time_col: "false",
   table_arr: "false",
   table_arr2: "false",
   amount_boxL: 5,
   amount_boxR: 5,
   stem_surname: "name",
-  stem_surname_table: "name",
+  stem_surname_table: "surname",
   stem_surname_popup: "false",
   stem_name_table: null,
   stem_name_popup: null,
@@ -42,7 +42,7 @@ const mockSetting: Setting = {
   lock_position: "false",
   lock_position_right: "false",
   urgent_level: "true",
-  status_patient: "true",
+  status_patient: "false",
   status_check: "false",
   ads: "",
   ads_type: "split",
@@ -59,7 +59,7 @@ const mockSetting: Setting = {
   set_descrip: "",
   set_notice: "",
   type_popup: "",
-  time_wait: "20",
+  time_wait: "10",
   listPage: "",
   limitNum: null,
   speedLoop: null,
@@ -69,130 +69,53 @@ const mockSetting: Setting = {
   color_dynamic: null,
 };
 
-const mockVisitDataLeft: VisitInfo[] = [
-  {
-    id: 1,
-    code_dept_id: "1",
-    patient_name: "สมชาย ใจดี",
-    queue_number: "A001",
-    visit_date: "2024-01-15",
-    status: "wait",
-    urgent_id: 1,
-    urgent_color: "#FF0000",
-    urgent_setup: "ฉุกเฉิน",
-    urgent_level: "สูง",
-    priority_rate: 1,
-    check_in: "2024-01-15 08:00:00",
-    time_call: null,
-    status_call: null,
-    arr_r: false,
-    station_index: 1,
-  },
-  {
-    id: 2,
-    code_dept_id: "1",
-    patient_name: "สมหญิง รักดี",
-    queue_number: "A002",
-    visit_date: "2024-01-15",
-    status: "wait",
-    urgent_id: 2,
-    urgent_color: "#FFA500",
-    urgent_setup: "ด่วน",
-    urgent_level: "ปานกลาง",
-    priority_rate: 2,
-    check_in: "2024-01-15 08:05:00",
-    time_call: null,
-    status_call: null,
-    arr_r: false,
-    station_index: 2,
-  },
+const mockVisitDataLeft1: VisitInfo[] = [
+  { id: 1, patient_name: "สมชาย ใจดี", name: "สมชาย", surname: "ใจดี", queue_number: "A1", visit_q_no: "A1", status: "wait", urgent_id: 1, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "รอ" },
+];
+const mockVisitDataLeft2: VisitInfo[] = [
+  { id: 11, patient_name: "วิชัย สุขดี", name: "วิชัย", surname: "สุขดี", queue_number: "A11", visit_q_no: "A11", status: "wait", urgent_id: 1, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "รอ" },
 ];
 
-const mockActiveDataLeft: VisitInfo[] = [
-  {
-    id: 3,
-    code_dept_id: "1",
-    patient_name: "มานะ ขยันดี",
-    queue_number: "A003",
-    visit_date: "2024-01-15",
-    status: "active",
-    urgent_id: 1,
-    urgent_color: "#FF0000",
-    urgent_setup: "ฉุกเฉิน",
-    urgent_level: "สูง",
-    priority_rate: 1,
-    check_in: "2024-01-15 07:50:00",
-    time_call: "2024-01-15 08:00:00",
-    status_call: "called",
-    arr_r: false,
-    station_index: 1,
-  },
+const mockActiveDataLeft1: VisitInfo[] = [
+  { id: 3, patient_name: "มานะ ขยันดี", name: "มานะ", surname: "ขยันดี", queue_number: "A3", visit_q_no: "A3", status: "active", urgent_id: 1, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "กำลังรับบริการ", station: "โต๊ะ 1" },
+];
+const mockActiveDataLeft2: VisitInfo[] = [
+  { id: 13, patient_name: "ปิติ พรหมดี", name: "ปิติ", surname: "พรหมดี", queue_number: "A13", visit_q_no: "A13", status: "active", urgent_id: 1, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "กำลังรับบริการ", station: "โต๊ะ 1" },
 ];
 
-const mockVisitDataRight: VisitInfo[] = [
-  {
-    id: 4,
-    code_dept_id: "2",
-    patient_name: "วิชัย สุขดี",
-    queue_number: "B001",
-    visit_date: "2024-01-15",
-    status: "wait",
-    urgent_id: 2,
-    urgent_color: "#FFA500",
-    urgent_setup: "ด่วน",
-    urgent_level: "ปานกลาง",
-    priority_rate: 2,
-    check_in: "2024-01-15 08:10:00",
-    time_call: null,
-    status_call: null,
-    arr_r: false,
-    station_index: 4,
-  },
-  {
-    id: 5,
-    code_dept_id: "2",
-    patient_name: "มาลี สวยดี",
-    queue_number: "B002",
-    visit_date: "2024-01-15",
-    status: "wait",
-    urgent_id: 3,
-    urgent_color: "#00FF00",
-    urgent_setup: "ปกติ",
-    urgent_level: "ต่ำ",
-    priority_rate: 3,
-    check_in: "2024-01-15 08:15:00",
-    time_call: null,
-    status_call: null,
-    arr_r: false,
-    station_index: 5,
-  },
+const mockVisitDataRight1: VisitInfo[] = [
+  { id: 4, patient_name: "สมหญิง รักดี", name: "สมหญิง", surname: "รักดี", queue_number: "B1", visit_q_no: "B1", status: "wait", urgent_id: 2, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "รอ" },
+];
+const mockVisitDataRight2: VisitInfo[] = [
+  { id: 14, patient_name: "สมพร พรดี", name: "สมพร", surname: "พรดี", queue_number: "B11", visit_q_no: "B11", status: "wait", urgent_id: 2, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "รอ" },
 ];
 
-const mockActiveDataRight: VisitInfo[] = [
-  {
-    id: 6,
-    code_dept_id: "2",
-    patient_name: "วินัย ดีมาก",
-    queue_number: "B003",
-    visit_date: "2024-01-15",
-    status: "active",
-    urgent_id: 2,
-    urgent_color: "#FFA500",
-    urgent_setup: "ด่วน",
-    urgent_level: "ปานกลาง",
-    priority_rate: 2,
-    check_in: "2024-01-15 08:05:00",
-    time_call: "2024-01-15 08:10:00",
-    status_call: "called",
-    arr_r: false,
-    station_index: 4,
-  },
+const mockActiveDataRight1: VisitInfo[] = [
+  { id: 6, patient_name: "วินัย ดีมาก", name: "วินัย", surname: "ดีมาก", queue_number: "B3", visit_q_no: "B3", status: "active", urgent_id: 2, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "กำลังรับบริการ", station: "โต๊ะ 4" },
 ];
-
-const mockSkippedData: VisitInfo[] = [];
+const mockActiveDataRight2: VisitInfo[] = [
+  { id: 16, patient_name: "สายใจ ใฝ่ดี", name: "สายใจ", surname: "ใฝ่ดี", queue_number: "B13", visit_q_no: "B13", status: "active", urgent_id: 2, urgent_color: "#0066AA", Color: "#0066AA", status_patient: "กำลังรับบริการ", station: "โต๊ะ 4" },
+];
 
 export default function PreviewDuoPage() {
-  const [showSplitAd] = useState(false);
+  const [dataIndex, setDataIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setDataIndex((prev) => (prev === 0 ? 1 : 0));
+        setIsTransitioning(false);
+      }, 500);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentActiveLeft = dataIndex === 0 ? mockActiveDataLeft1 : mockActiveDataLeft2;
+  const currentVisitLeft = dataIndex === 0 ? mockVisitDataLeft1 : mockVisitDataLeft2;
+  const currentActiveRight = dataIndex === 0 ? mockActiveDataRight1 : mockActiveDataRight2;
+  const currentVisitRight = dataIndex === 0 ? mockVisitDataRight1 : mockVisitDataRight2;
 
   const tableNamesLeft = mockSetting.station_l ? mockSetting.station_l.split(',') : [];
   const tableNamesRight = mockSetting.station_r ? mockSetting.station_r.split(',') : [];
@@ -200,43 +123,20 @@ export default function PreviewDuoPage() {
 
   return (
     <div className={styles.container} style={{ fontFamily }}>
+      <div className={isTransitioning ? styles.fadeOut : styles.fadeIn}>
       <Header setting={mockSetting} />
       <main className={styles.mainContent}>
         <div className={styles.column}>
-          <InterviewTable setting={mockSetting} visitData={mockVisitDataLeft} />
-          <ServiceSection setting={mockSetting} sortedActiveData={mockActiveDataLeft} tableNames={tableNamesLeft} />
+            <InterviewTable setting={mockSetting} visitData={currentVisitLeft} />
+            <ServiceSection setting={mockSetting} sortedActiveData={currentActiveLeft} tableNames={tableNamesLeft} hideNumber={true} />
         </div>
         <div className={styles.column}>
-          <InterviewTableRight setting={mockSetting} visitData={mockVisitDataRight} />
-          <ServiceSection setting={mockSetting} sortedActiveData={mockActiveDataRight} tableNames={tableNamesRight} isRight={true} />
+            <InterviewTableRight setting={mockSetting} visitData={currentVisitRight} />
+            <ServiceSection setting={mockSetting} sortedActiveData={currentActiveRight} tableNames={tableNamesRight} isRight={true} hideNumber={true} />
         </div>
       </main>
-      
-      {/* Overlay โฆษณาแบบหน้าแยก (split) */}
-      {(() => {
-        const enableAds = mockSetting.enable_ads ?? (mockSetting.ads && mockSetting.ads !== '' && mockSetting.ads !== 'false');
-        if (!enableAds || mockSetting.ads_type !== 'split' || !showSplitAd) return null;
-        
-        const splitAdsUrl = mockSetting.ads_path_left || mockSetting.ads;
-        return splitAdsUrl ? (
-          <div className={styles.adsOverlay}>
-            <div className={styles.adsOverlayContent}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={splitAdsUrl}
-                alt="Advertisement"
-                className={styles.adsOverlayImage}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            </div>
+        <SkippedQueueBar skippedData={[]} setting={mockSetting} />
           </div>
-        ) : null;
-      })()}
-      
-      {mockSetting && <SkippedQueueBar skippedData={mockSkippedData} setting={mockSetting} />}
-
     </div>
   );
 }

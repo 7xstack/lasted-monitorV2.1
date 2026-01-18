@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Settings, Edit, Trash2, Plus, Monitor, Home, Eye } from 'lucide-react';
+import { Settings, Edit, Trash2, Plus, Monitor, Home, Eye, FileText } from 'lucide-react';
 import { PayloadData, SettingData } from '@/components/setting/types';
 import AddScreenModal from '@/components/setting/AddScreenModal';
 import SwapModal from '@/components/setting/SwapModal';
@@ -12,10 +11,6 @@ import ErrorPopup from '@/components/setting/ErrorPopup';
 
 
 export default function SettingPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [settings, setSettings] = useState<SettingData[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
@@ -32,132 +27,11 @@ export default function SettingPage() {
   const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState<string>('all');
 
   // State สำหรับ Swap Modal
-  const [swapCount, setSwapCount] = useState<number>(0);
-  const [swapSelections, setSwapSelections] = useState<string[]>([]);
+  const [swapCount, setSwapCount] = useState<number>(2);
+  const [swapSelections, setSwapSelections] = useState<string[]>(['', '']);
   const [availableSettings, setAvailableSettings] = useState<SettingData[]>([]);
   const [swapTimeWait, setSwapTimeWait] = useState<number>(20); // default 20 วินาที
 
-  // Mock data flag - ตั้งเป็น true เพื่อใช้ mock data เมื่อ server ใช้ไม่ได้
-  const USE_MOCK_DATA = true;
-
-  // Mock data สำหรับหน้าจอแต่ละ type
-  const getMockSettings = (): SettingData[] => [
-    {
-      id: '1',
-      type: 'single',
-      n_hospital: 'โรงพยาบาลตัวอย่าง',
-      n_department: 'แผนกผู้ป่วยนอก',
-      head_left: 'รอรับบริการ',
-      head_right: '',
-      amount_left: 8,
-      amount_right: 0,
-      query_left: '2,3,4',
-      query_right: '',
-      station_left: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3,โต๊ะ 4',
-      station_right: '',
-    },
-    {
-      id: '2',
-      type: 'duo',
-      n_hospital: 'โรงพยาบาลตัวอย่าง',
-      n_department: 'แผนกอายุรกรรม',
-      head_left: 'รอรับบริการ',
-      head_right: 'กำลังรับบริการ',
-      amount_left: 6,
-      amount_right: 4,
-      query_left: '2,3',
-      query_right: '4,5',
-      station_left: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3',
-      station_right: 'โต๊ะ 4,โต๊ะ 5',
-    },
-    {
-      id: '3',
-      type: 'er',
-      n_hospital: 'โรงพยาบาลตัวอย่าง',
-      n_department: 'แผนกฉุกเฉิน',
-      head_left: 'ER Monitor',
-      head_right: '',
-      amount_left: 5,
-      amount_right: 0,
-      query_left: '6,7',
-      query_right: '',
-      station_left: 'ER-A,ER-B,ER-C,ER-D,ER-E',
-      station_right: '',
-    },
-    {
-      id: '4',
-      type: 'swap',
-      n_hospital: 'โรงพยาบาลตัวอย่าง',
-      n_department: 'Swap Monitor',
-      head_left: '',
-      head_right: '',
-      amount_left: 0,
-      amount_right: 0,
-      query_left: '',
-      query_right: '',
-      station_left: '',
-      station_right: '',
-    },
-    {
-      id: '5',
-      type: 'triple',
-      n_hospital: 'โรงพยาบาลตัวอย่าง',
-      n_department: 'แผนกผู้ป่วยนอก',
-      head_left: 'ผู้รับบริการทั่วไป',
-      head_right: 'ผู้รับบริการสูงอายุ',
-      amount_left: 8,
-      amount_right: 0,
-      query_left: '2,3,4',
-      query_right: '',
-      station_left: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3,โต๊ะ 4',
-      station_right: '',
-    },
-  ];
-
-  // Check authentication - ตรวจสอบทุกครั้งที่เข้าหน้า setting
-  useEffect(() => {
-    const checkAuth = () => {
-      if (typeof window === 'undefined') {
-        setIsCheckingAuth(false);
-        return;
-      }
-      
-      const authStatus = sessionStorage.getItem('isAuthenticated');
-      const isValid = authStatus === 'true';
-      
-      if (!isValid) {
-        // ล้างค่าเก่าที่อาจจะเหลืออยู่
-        sessionStorage.removeItem('isAuthenticated');
-        sessionStorage.removeItem('username');
-        setIsAuthenticated(false);
-        setIsCheckingAuth(false);
-        // ใช้ window.location.href เพื่อบังคับ redirect ทันที
-        window.location.href = '/login';
-        return;
-      }
-      
-      setIsAuthenticated(true);
-      setIsCheckingAuth(false);
-    };
-
-    // ตรวจสอบทันที
-    checkAuth();
-    
-    // ตรวจสอบเป็นระยะๆ เพื่อป้องกันการแก้ไข sessionStorage
-    const intervalId = setInterval(() => {
-      if (typeof window === 'undefined') return;
-      
-      const currentAuthStatus = sessionStorage.getItem('isAuthenticated');
-      if (currentAuthStatus !== 'true') {
-        sessionStorage.removeItem('isAuthenticated');
-        sessionStorage.removeItem('username');
-        setIsAuthenticated(false);
-        window.location.href = '/login';
-      }
-    }, 500);
-    
-    return () => clearInterval(intervalId);
-  }, [router, pathname]);
 
   // Fetch settings from database
   const fetchSettings = useCallback(async () => {
@@ -419,30 +293,30 @@ export default function SettingPage() {
     arr_r: false,
     set_descrip: false,
     set_notice: false,
-    stem_surname: 'name',
+    stem_surname: 'false',
     type_popup: '1',
     stem_popup: 'false',
-    stem_surname_popup: 'false',
-    stem_surname_table: 'name',
+    stem_surname_popup: 'true',
+    stem_surname_table: 'true',
     stem_name: 'name',
     stem_name_table: 'name',
-    urgent_color: true,
-    status_patient: true,
+    urgent_color: false,
+    status_patient: false,
     status_check: false,
     lock_position: false,
     lock_position_right: false,
-    urgent_level: true,
+    urgent_level: false,
     a_sound: true,
     b_sound: false,
     c_sound: false,
-    time_col: true,
+    time_col: false,
     station_left: '',
     station_right: '',
-    query_left: '2',
-    query_right: '2',
+    query_left: '',
+    query_right: '',
     listPage: '',
     style_voice: 'female',
-    voice: '1',
+    voice: '3',
   });
 
   // Auto-generate ID
@@ -450,8 +324,8 @@ export default function SettingPage() {
     try {
       const response = await fetch('/api/setting/count');
       const data = await response.json();
-      // ใช้ maxId แทน count เพื่อป้องกันการ generate ID ซ้ำ
-      const nextId = (data.maxId || 0) + 1;
+      // ใช้ maxSettingId (ID สูงสุดในฐานข้อมูล) เพื่อป้องกันการ generate ID ซ้ำ
+      const nextId = (data.maxSettingId || 0) + 1;
       setPayload(prev => ({ ...prev, typeMonitor: nextId.toString() }));
     } catch (error) {
       console.error('Error generating ID:', error);
@@ -504,30 +378,30 @@ export default function SettingPage() {
       arr_r: false,
       set_descrip: false,
       set_notice: false,
-      stem_surname: 'name',
-      stem_surname_table: 'name',
+      stem_surname: 'true',
+      stem_surname_table: 'true',
       stem_name: 'name',
       stem_name_table: 'name',
       type_popup: '1',
       stem_popup: 'false',
-      stem_surname_popup: 'false',
-      urgent_color: true,
-      status_patient: true,
+      stem_surname_popup: 'true',
+      urgent_color: false,
+      status_patient: false,
       status_check: false,
       lock_position: false,
       lock_position_right: false,
-      urgent_level: true,
+      urgent_level: false,
       a_sound: true,
       b_sound: false,
       c_sound: false,
-      time_col: true,
+      time_col: false,
       station_left: '',
       station_right: '',
-      query_left: '2',
-      query_right: '2',
+      query_left: '',
+      query_right: '',
       listPage: '',
       style_voice: 'female',
-      voice: '1',
+      voice: '3',
     });
     setCurrentStep(1);
   };
@@ -543,8 +417,8 @@ export default function SettingPage() {
   };
   const handleOpenModalSwap = async () => {
     // Reset swap modal state
-    setSwapCount(0);
-    setSwapSelections([]);
+    setSwapCount(2);
+    setSwapSelections(['', '']);
     setSwapTimeWait(20); // default 20 วินาที
     setShowModalSwap(true);
   };
@@ -567,7 +441,7 @@ export default function SettingPage() {
       // ดึง ID ล่าสุด + 1
       const countResponse = await fetch('/api/setting/count');
       const countData = await countResponse.json();
-      const nextId = (countData.maxId || 0) + 1;
+      const nextId = (countData.maxSettingId || 0) + 1;
 
       // สร้าง listPage เป็น comma-separated string
       const listPage = swapSelections.join(',');
@@ -593,17 +467,17 @@ export default function SettingPage() {
         stem_surname_table: 'name',
         stem_name: 'name',
         stem_name_table: 'name',
-        stem_name_popup: 'false',
-        urgent_color: true,
-        status_patient: true,
+        stem_name_popup: 'true',
+        urgent_color: false,
+        status_patient: false,
         status_check: false,
         lock_position: false,
         lock_position_right: false,
-        urgent_level: true,
+        urgent_level: false,
         a_sound: true,
         b_sound: false,
         c_sound: false,
-        time_col: true,
+        time_col: false,
         station_left: '',
         station_right: '',
         query_left: '2',
@@ -765,17 +639,6 @@ export default function SettingPage() {
     }
   };
 
-  // ไม่แสดงเนื้อหาจนกว่าจะตรวจสอบ authentication เสร็จ
-  if (isCheckingAuth || isAuthenticated === null || isAuthenticated === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-blue-50/30 to-slate-50">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: '#043566', borderTopColor: 'transparent' }}></div>
-          <p className="text-slate-600 font-medium">กำลังตรวจสอบสิทธิ์การเข้าถึง...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-slate-50" style={{ backgroundImage: 'linear-gradient(to bottom right, #ffffff, #f8fafc, #f1f5f9)' }}>
@@ -789,17 +652,29 @@ export default function SettingPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: '#043566' }}>การตั้งค่าระบบ</h1>
-                <p className="text-sm text-slate-600 mt-1">จัดการการตั้งค่าหน้าจอแสดงผล V3.0.0-beta.20251223</p>
+                <p className="text-sm text-slate-600 mt-1">จัดการการตั้งค่าหน้าจอแสดงผล  V3.0.0-beta.20251224</p>
               </div>
             </div>
-            <Link
-              href="/"
-              className="flex items-center space-x-2 px-5 py-2.5 bg-white hover:bg-slate-50 rounded-xl transition-all duration-200 border shadow-sm hover:shadow font-medium"
-              style={{ color: '#043566', borderColor: '#e2e8f0' }}
-            >
-              <Home className="w-5 h-5" />
-              <span>กลับหน้าหลัก</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="https://monitor.aztecthstudio.com/log"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 px-5 py-2.5 bg-white hover:bg-slate-50 rounded-xl transition-all duration-200 border shadow-sm hover:shadow font-medium"
+                style={{ color: '#043566', borderColor: '#e2e8f0' }}
+              >
+                <FileText className="w-5 h-5" />
+                <span>System Logs</span>
+              </Link>
+              <Link
+                href="/"
+                className="flex items-center space-x-2 px-5 py-2.5 bg-white hover:bg-slate-50 rounded-xl transition-all duration-200 border shadow-sm hover:shadow font-medium"
+                style={{ color: '#043566', borderColor: '#e2e8f0' }}
+              >
+                <Home className="w-5 h-5" />
+                <span>กลับหน้าหลัก</span>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
