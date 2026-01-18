@@ -58,8 +58,7 @@ wss.on('connection', ws => {
             ws.setting_id = data.id;
             info(`Client registered for setting_id: ${ws.setting_id}`);
         }
-        if (data.query_type && ['er', 'er_2', 'single', 'duo', 'queue', 'drug'].includes(data.query_type)) {
-        if (data.query_type && ['er', 'er_2', 'single', 'duo', 'triple'].includes(data.query_type)) {
+        if (data.query_type && ['er', 'er_2', 'single', 'duo', 'queue', 'drug', 'triple'].includes(data.query_type)) {
             ws.query_type = data.query_type;
             info(`Client registered for query_type: ${ws.query_type}`);
         }
