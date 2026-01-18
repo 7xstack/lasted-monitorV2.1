@@ -16,8 +16,6 @@ import {
 } from "../../../lib/audio-unlock";
 // import { logAudioEvent } from '../../../lib/audio-logger';
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { Setting, VisitInfo } from "./types";
-
 // เปิด/ปิด Mock Mode - ตั้งเป็น true เพื่อใช้ mock data
 const USE_MOCK_DATA = true;
 
@@ -119,8 +117,8 @@ const generateMockVisitData = (): VisitInfo[] => {
       urgent_level: urgentLevel,
       priority_rate: 1,
       check_in: new Date().toISOString(),
-      time_call: null,
-      status_call: null,
+      time_call: '',
+      status_call: '',
       arr_r: false,
       station_index: 0,
       Color: color,
