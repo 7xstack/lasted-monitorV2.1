@@ -18,68 +18,7 @@ const ServiceSection = dynamic(() => import('./ServiceSection'), { ssr: false })
 const SkippedQueueBar = dynamic(() => import('./SkippedQueueBar'), { ssr: false });
 const CallPopup = dynamic(() => import('./CallPopup'), { ssr: false });
 
-// เปิด/ปิด Mock Mode - ตั้งเป็น true เพื่อใช้ mock data
-const USE_MOCK_DATA = true;
-
 const VOICE_DOMAIN = 'https://voice.aztecthstudio.com';
-
-// Mock Setting Data
-const getMockSetting = (id: string): Setting => ({
-  id: parseInt(id) || 3,
-  type: 'er',
-  department: 'แผนกฉุกเฉิน',
-  n_hospital: 'โรงพยาบาลตัวอย่าง',
-  n_room: 'ห้องตรวจ ER',
-  n_table: 'ER-A',
-  n_listtable: 'ER-A,ER-B,ER-C,ER-D,ER-E',
-  n_listroom: 'ห้องตรวจ ER',
-  department_load: '6,7',
-  department_room_load: '',
-  time_col: 'true',
-  table_arr: 'ER-A',
-  table_arr2: '',
-  amount_boxL: 5,
-  amount_boxR: 0,
-  stem_surname: 'name',
-  stem_surname_table: 'name',
-  stem_surname_popup: 'false',
-  stem_name_table: 'name',
-  station_l: 'ER-A,ER-B,ER-C,ER-D,ER-E',
-  station_r: '',
-  stem_popup: 'false',
-  a_sound: 'true',
-  b_sound: 'false',
-  c_sound: 'false',
-  stem_name: 'name',
-  urgent_color: 'true',
-  lock_position: 'false',
-  lock_position_right: 'false',
-  urgent_level: 'true',
-  status_patient: 'true',
-  status_check: 'false',
-  ads: '',
-  timeout: null,
-  pages: null,
-  urgent_setup: 'ฉุกเฉิน',
-  alternate: null,
-  voice: '1',
-  style_voice: '2',
-  set_descrip: 'false',
-  set_notice: 'false',
-  time_wait: '20',
-  listPage: '',
-  limitNum: null,
-  speedLoop: null,
-  activeLoop: null,
-  font: 'Rubik',
-  list_urgent: 'R,E,U',
-  ads_type: 'split',
-  enable_ads: false,
-  ads_path_left: '',
-  ads_path_right: '',
-  color_static: null,
-  color_dynamic: null,
-});
 const playVoicePlaylist = (voicePaths: string[], currentSoundRef: React.MutableRefObject<Howl | null>): Promise<void> => {
   return new Promise((resolve) => {
     if (!voicePaths || voicePaths.length === 0) {
@@ -318,16 +257,6 @@ export default function ErPage({ params }: { params: Promise<{ id: string }> }) 
 
     const fetchSetting = async (isInitial = false) => {
       try {
-        // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
-        if (USE_MOCK_DATA) {
-          console.log('[Mock] ใช้ mock setting data สำหรับ id:', id);
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 300));
-          const mockSetting = getMockSetting(id);
-          setSetting(mockSetting);
-          return;
-        }
-        
         const response = await fetch(`/api/setting/${id}`);
         const result = await response.json();
         if (result.success) {

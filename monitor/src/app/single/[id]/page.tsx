@@ -18,69 +18,7 @@ import {
 // import { logAudioEvent } from '../../../lib/audio-logger';
 import LoadingSpinner from "../../../components/LoadingSpinner";
 
-// เปิด/ปิด Mock Mode - ตั้งเป็น true เพื่อใช้ mock data
-const USE_MOCK_DATA = true;
-
 const VOICE_DOMAIN = "https://voice.aztecthstudio.com";
-
-// Mock Setting Data
-const getMockSetting = (id: string): Setting => ({
-  id: parseInt(id) || 1,
-  department: 'แผนกผู้ป่วยนอก',
-  n_hospital: 'โรงพยาบาลตัวอย่าง',
-  n_room: 'ห้องตรวจ 1',
-  n_table: 'โต๊ะ 1',
-  n_listtable: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3',
-  n_listroom: 'ห้องตรวจ 1,ห้องตรวจ 2',
-  department_load: '2,3,4',
-  department_room_load: '',
-  time_col: 'true',
-  table_arr: 'โต๊ะ 1',
-  table_arr2: '',
-  amount_boxL: 8,
-  amount_boxR: 0,
-  stem_surname: 'name',
-  stem_surname_table: 'name',
-  stem_surname_popup: 'false',
-  stem_name_table: 'name',
-  stem_name_popup: 'false',
-  station_l: 'โต๊ะ 1,โต๊ะ 2,โต๊ะ 3,โต๊ะ 4',
-  station_r: '',
-  stem_popup: 'false',
-  a_sound: 'true',
-  b_sound: 'false',
-  c_sound: 'false',
-  stem_name: 'name',
-  urgent_color: 'true',
-  lock_position: 'false',
-  lock_position_right: 'false',
-  urgent_level: 'true',
-  status_patient: 'true',
-  status_check: 'false',
-  ads: '',
-  ads_type: 'split',
-  enable_ads: false,
-  ads_path_left: '',
-  ads_path_right: '',
-  timeout: null,
-  pages: null,
-  urgent_setup: 'ฉุกเฉิน',
-  type: 'single',
-  alternate: null,
-  voice: '1',
-  style_voice: '2',
-  set_descrip: 'false',
-  set_notice: 'false',
-  type_popup: '1',
-  time_wait: '20',
-  listPage: '',
-  limitNum: null,
-  speedLoop: null,
-  activeLoop: null,
-  font: 'Rubik',
-  color_static: null,
-  color_dynamic: null,
-});
 
 const playVoicePlaylist = (
   voicePaths: string[],
@@ -324,16 +262,6 @@ export default function SinglePage({
 
     const fetchSetting = async () => {
       try {
-        // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
-        if (USE_MOCK_DATA) {
-          console.log('[Mock] ใช้ mock setting data สำหรับ id:', currentDisplayId);
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 300));
-          const mockSetting = getMockSetting(currentDisplayId);
-          setSetting(mockSetting);
-          return;
-        }
-        
         const response = await fetch(`/api/setting/${currentDisplayId}`);
         const result = await response.json();
         if (result.success) {
