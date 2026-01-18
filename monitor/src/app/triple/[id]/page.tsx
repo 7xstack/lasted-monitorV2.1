@@ -16,8 +16,6 @@ import {
 } from "../../../lib/audio-unlock";
 // import { logAudioEvent } from '../../../lib/audio-logger';
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import { Setting, VisitInfo } from "./types";
-
 // เปิด/ปิด Mock Mode - ตั้งเป็น true เพื่อใช้ mock data
 const USE_MOCK_DATA = true;
 
@@ -97,7 +95,6 @@ const generateMockVisitData = (): VisitInfo[] => {
   ];
   const queueNumbers = ['A001', 'A002', 'A003', 'A004', 'A005', 'A006', 'A007', 'A008'];
   const urgentLevels = ['R', 'R', 'R', 'E', 'E', 'E', 'U', 'U'];
-  const colors = ['#0066AA', '#FF6B6B', '#4ECDC4'];
   
   for (let i = 0; i < 8; i++) {
     const urgentLevel = urgentLevels[i];
@@ -119,8 +116,8 @@ const generateMockVisitData = (): VisitInfo[] => {
       urgent_level: urgentLevel,
       priority_rate: 1,
       check_in: new Date().toISOString(),
-      time_call: null,
-      status_call: null,
+      time_call: '',
+      status_call: '',
       arr_r: false,
       station_index: 0,
       Color: color,
@@ -346,6 +343,7 @@ export default function SinglePage({
 
   const [setting, setSetting] = useState<Setting | null>(null);
   const [visitData, setVisitData] = useState<VisitInfo[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeData, setActiveData] = useState<VisitInfo[]>([]);
   const [skippedData, setSkippedData] = useState<VisitInfo[]>([]);
   const [callData, setCallData] = useState<VisitInfo | null>(null);
@@ -818,7 +816,6 @@ export default function SinglePage({
     return <LoadingSpinner text="กำลังรอการตั้งค่า..." />;
   }
 
-  const tableNames = setting.station_l ? setting.station_l.split(",") : [];
   const fontFamily =
     setting.font === "sarabun"
       ? "'Sarabun', sans-serif"
