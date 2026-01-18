@@ -563,6 +563,7 @@ export default function AddScreenModal({
                       <option value="queue">Queue</option>
                       <option value="queue_only">Queue Only</option>
                       <option value="drug">Drug</option>
+                      <option value="triple">Triple</option>
                     </select>
                   </div>
 

@@ -6,7 +6,6 @@ import { useNetworkError } from "../../../components/NetworkErrorProvider";
 import { Setting, VisitInfo } from "./types";
 import Header from "./Header";
 import InterviewTable from "./InterviewTable";
-import ServiceSection from "./ServiceSection";
 import SkippedQueueBar from "./SkippedQueueBar";
 import CallPopup from "./CallPopup";
 import AudioUnlockOverlay from "../../../components/AudioUnlockOverlay";
@@ -17,6 +16,7 @@ import {
 } from "../../../lib/audio-unlock";
 // import { logAudioEvent } from '../../../lib/audio-logger';
 import LoadingSpinner from "../../../components/LoadingSpinner";
+import { Setting, VisitInfo } from "./types";
 
 // เปิด/ปิด Mock Mode - ตั้งเป็น true เพื่อใช้ mock data
 const USE_MOCK_DATA = true;
@@ -65,7 +65,7 @@ const getMockSetting = (id: string): Setting => ({
   timeout: null,
   pages: null,
   urgent_setup: 'ฉุกเฉิน',
-  type: 'single',
+  type: 'triple',
   alternate: null,
   voice: '1',
   style_voice: '2',
@@ -80,7 +80,91 @@ const getMockSetting = (id: string): Setting => ({
   font: 'Rubik',
   color_static: null,
   color_dynamic: null,
+  display_three_columns: 'true',
+  column_title_1: 'ผู้รับบริการทั่วไป',
+  column_title_2: 'ผู้รับบริการสูงอายุ 70 ปี',
+  column_title_3: 'ผู้รับบริการกลุ่มนัด',
+  list_urgent: 'R,E,U',
 });
+
+// Mock Visit Data - แบ่งเป็น 3 ประเภทตาม urgent_level
+const generateMockVisitData = (): VisitInfo[] => {
+  const visits: VisitInfo[] = [];
+  const names = [
+    'สมชาย ใจดี', 'สมหญิง รักสุข', 'วิชัย เก่งมาก', // R
+    'มาลี สวยงาม', 'ประเสริฐ ดีใจ', 'สุดา งามมาก', // E
+    'วิเชียร เก่งมาก', 'สมพร รักสุข', // U
+  ];
+  const queueNumbers = ['A001', 'A002', 'A003', 'A004', 'A005', 'A006', 'A007', 'A008'];
+  const urgentLevels = ['R', 'R', 'R', 'E', 'E', 'E', 'U', 'U'];
+  const colors = ['#0066AA', '#FF6B6B', '#4ECDC4'];
+  
+  for (let i = 0; i < 8; i++) {
+    const urgentLevel = urgentLevels[i];
+    let color = '#0066AA';
+    if (urgentLevel === 'E') color = '#FF6B6B';
+    if (urgentLevel === 'U') color = '#4ECDC4';
+    
+    visits.push({
+      id: i + 1,
+      code_dept_id: '2',
+      patient_name: names[i],
+      visit_q_no: queueNumbers[i],
+      queue_number: queueNumbers[i],
+      visit_date: new Date().toISOString().split('T')[0],
+      status: 'waiting',
+      urgent_id: i % 3 + 1,
+      urgent_color: color,
+      urgent_setup: 'ฉุกเฉิน',
+      urgent_level: urgentLevel,
+      priority_rate: 1,
+      check_in: new Date().toISOString(),
+      time_call: null,
+      status_call: null,
+      arr_r: false,
+      station_index: 0,
+      Color: color,
+    });
+  }
+  return visits;
+};
+
+// Mock Active Data
+const generateMockActiveData = (): VisitInfo[] => {
+  const active: VisitInfo[] = [];
+  const names = ['นพ. ตัวอย่าง', 'พญ. ทดสอบ'];
+  const stations = ['โต๊ะ 1', 'โต๊ะ 2'];
+  
+  for (let i = 0; i < 2; i++) {
+    active.push({
+      id: i + 100,
+      code_dept_id: '2',
+      patient_name: names[i],
+      visit_q_no: `A00${i + 1}`,
+      queue_number: `A00${i + 1}`,
+      visit_date: new Date().toISOString().split('T')[0],
+      status: 'active',
+      urgent_id: 1,
+      urgent_color: '#0066AA',
+      urgent_setup: 'ฉุกเฉิน',
+      urgent_level: 'R',
+      priority_rate: 1,
+      check_in: new Date().toISOString(),
+      time_call: new Date().toISOString(),
+      status_call: 'active',
+      arr_r: false,
+      station_index: i,
+      station: stations[i],
+      Color: '#0066AA',
+    });
+  }
+  return active;
+};
+
+// Mock Skipped Data
+const generateMockSkippedData = (): VisitInfo[] => {
+  return [];
+};
 
 const playVoicePlaylist = (
   voicePaths: string[],
@@ -493,6 +577,37 @@ export default function SinglePage({
   useEffect(() => {
     if (!currentDisplayId || !audioUnlocked) return;
 
+    // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
+    if (USE_MOCK_DATA) {
+      console.log('[Mock] ใช้ mock WebSocket data สำหรับ id:', currentDisplayId);
+      
+      // ตั้งค่า mock data ทันที
+      setVisitData(generateMockVisitData());
+      setActiveData(generateMockActiveData());
+      setSkippedData(generateMockSkippedData());
+      
+      // Simulate data update ทุก 5 วินาที
+      const mockInterval = setInterval(() => {
+        // สุ่มเปลี่ยนข้อมูลเล็กน้อยเพื่อให้ดูเหมือนมีการอัปเดต
+        const newVisitData = generateMockVisitData();
+        // สลับลำดับ queue numbers เพื่อให้ดูมีการเปลี่ยนแปลง
+        newVisitData.forEach((visit, index) => {
+          visit.visit_q_no = `A00${(index + Math.floor(Date.now() / 5000) % 8) + 1}`;
+        });
+        setVisitData(newVisitData);
+        setActiveData(generateMockActiveData());
+        setSkippedData(generateMockSkippedData());
+        console.log('[Mock] อัปเดต mock data');
+      }, 5000);
+      
+      return () => {
+        clearInterval(mockInterval);
+        setVisitData([]);
+        setActiveData([]);
+        setSkippedData([]);
+      };
+    }
+
     const wsUrl = `wss://monitor.aztecthstudio.com/ws/`;
     const ws = new WebSocket(wsUrl);
     
@@ -506,7 +621,7 @@ export default function SinglePage({
         JSON.stringify({
           type: "register",
           id: currentDisplayId, // ใช้ currentDisplayId แทน id จาก URL
-          query_type: "single",
+          query_type: "triple",
         })
       );
     };
@@ -753,12 +868,6 @@ export default function SinglePage({
           ) : null;
         })()}
         <InterviewTable setting={setting} visitData={visitData} />
-
-        <ServiceSection
-          setting={setting}
-          sortedActiveData={activeData}
-          tableNames={tableNames}
-        />
         {/* แสดงรูปโฆษณาฝั่งขวา (ads_type = 'right') */}
         {(() => {
           const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');

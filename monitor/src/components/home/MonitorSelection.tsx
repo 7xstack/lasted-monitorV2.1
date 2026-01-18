@@ -1,6 +1,6 @@
 "use client";
 
-import { Monitor, Rows, AlertTriangle, ArrowRight } from "lucide-react";
+import { Monitor, Rows, AlertTriangle, ArrowRight, Columns } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import React from "react";
@@ -27,6 +27,13 @@ const monitorConfigs = [
     href: "/preview/er",
     icon: <AlertTriangle className="h-8 w-8 text-sky-400" />,
   },
+  {
+    key: "triple",
+    title: "Triple Monitor",
+    description: "แสดงข้อมูลสามคอลัมน์ แยกตามประเภทผู้รับบริการ",
+    href: "/triple/1",
+    icon: <Columns className="h-8 w-8 text-sky-400" />,
+  },
 ];
 
 const MonitorSelection = React.forwardRef<HTMLDivElement>((props, ref) => {
@@ -41,7 +48,7 @@ const MonitorSelection = React.forwardRef<HTMLDivElement>((props, ref) => {
             เรียนรู้ระบบแสดงผลให้เหมาะกับพื้นที่และการใช้งานของคุณ
           </p>
         </div>
-        <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+        <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4">
           {monitorConfigs.map((monitor) => (
             <motion.div
               key={monitor.key}
