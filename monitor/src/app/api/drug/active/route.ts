@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       if (index > 0) query += ',';
       query += `@dept${index}`;
     });
-    query += ') AND mvi.visit_date = @visit_date AND mvi.status IN (@status1, @status2) ORDER BY mvi.check_in';
+    query += ') AND mvi.visit_date = @visit_date AND mvi.status IN (@status1, @status2) ORDER BY COALESCE(sul.priority_rate, 0) DESC, mvi.check_in ASC';
 
     // Execute query
     const dbRequest = connection.request();

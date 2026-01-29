@@ -14,14 +14,12 @@ import {
   unlockAudioContext,
   isAudioContextUnlocked,
 } from "../../../lib/audio-unlock";
-// import { logAudioEvent } from '../../../lib/audio-logger';
 import LoadingSpinner from "../../../components/LoadingSpinner";
-// เปิด/ปิด Mock Mode - ตั้งเป็น true เพื่อใช้ mock data
-const USE_MOCK_DATA = true;
+
+const USE_MOCK_DATA = false;
 
 const VOICE_DOMAIN = "https://voice.aztecthstudio.com";
 
-// Mock Setting Data
 const getMockSetting = (id: string): Setting => ({
   id: parseInt(id) || 1,
   department: 'แผนกผู้ป่วยนอก',
@@ -85,13 +83,12 @@ const getMockSetting = (id: string): Setting => ({
   list_urgent: 'R,E,U',
 });
 
-// Mock Visit Data - แบ่งเป็น 3 ประเภทตาม urgent_level
 const generateMockVisitData = (): VisitInfo[] => {
   const visits: VisitInfo[] = [];
   const names = [
-    'สมชาย ใจดี', 'สมหญิง รักสุข', 'วิชัย เก่งมาก', // R
-    'มาลี สวยงาม', 'ประเสริฐ ดีใจ', 'สุดา งามมาก', // E
-    'วิเชียร เก่งมาก', 'สมพร รักสุข', // U
+    'สมชาย ใจดี', 'สมหญิง รักสุข', 'วิชัย เก่งมาก',
+    'มาลี สวยงาม', 'ประเสริฐ ดีใจ', 'สุดา งามมาก',
+    'วิเชียร เก่งมาก', 'สมพร รักสุข',
   ];
   const queueNumbers = ['A001', 'A002', 'A003', 'A004', 'A005', 'A006', 'A007', 'A008'];
   const urgentLevels = ['R', 'R', 'R', 'E', 'E', 'E', 'U', 'U'];
@@ -127,7 +124,6 @@ const generateMockVisitData = (): VisitInfo[] => {
   return visits;
 };
 
-// Mock Active Data
 const generateMockActiveData = (): VisitInfo[] => {
   const active: VisitInfo[] = [];
   const names = ['นพ. ตัวอย่าง', 'พญ. ทดสอบ'];
@@ -159,7 +155,6 @@ const generateMockActiveData = (): VisitInfo[] => {
   return active;
 };
 
-// Mock Skipped Data
 const generateMockSkippedData = (): VisitInfo[] => {
   return [];
 };
@@ -174,7 +169,6 @@ const playVoicePlaylist = (
       return;
     }
 
-    // หยุดเสียงเก่าก่อนเล่นเสียงใหม่
     if (currentSoundRef.current) {
       currentSoundRef.current.stop();
       currentSoundRef.current.unload();
@@ -183,7 +177,6 @@ const playVoicePlaylist = (
 
     console.log(`[Audio] เริ่มโหลดไฟล์เสียงทั้งหมด ${voicePaths.length} ไฟล์`);
 
-    // สร้าง Howl objects สำหรับทุกไฟล์และโหลดทั้งหมดให้เสร็จก่อน
     const sounds: Howl[] = [];
     const loadPromises: Promise<void>[] = [];
 
@@ -194,7 +187,7 @@ const playVoicePlaylist = (
       const sound = new Howl({
         src: [fullUrl],
         html5: true,
-        preload: true, // โหลดไฟล์ทั้งหมดก่อน
+        preload: true,
         onload: () => {
           console.log(`[Audio] โหลดไฟล์เสียงสำเร็จ ${index + 1}/${voicePaths.length}: ${fullUrl}`);
         },
@@ -214,7 +207,6 @@ const playVoicePlaylist = (
 
       sounds.push(sound);
 
-      // รอให้ไฟล์โหลดเสร็จ
       const loadPromise = new Promise<void>((loadResolve) => {
         if (sound.state() === "loaded") {
           loadResolve();
@@ -224,7 +216,7 @@ const playVoicePlaylist = (
           });
           sound.once("loaderror", () => {
             console.warn(`[Audio] ข้ามไฟล์เสียงที่โหลดไม่สำเร็จ: ${fullUrl}`);
-            loadResolve(); // ยังคง resolve เพื่อไม่ให้บล็อกการเล่นไฟล์อื่น
+            loadResolve();
           });
         }
       });
@@ -232,7 +224,6 @@ const playVoicePlaylist = (
       loadPromises.push(loadPromise);
     });
 
-    // รอให้ทุกไฟล์โหลดเสร็จก่อน
     Promise.all(loadPromises)
       .then(() => {
         console.log(`[Audio] โหลดไฟล์เสียงทั้งหมดเสร็จแล้ว เริ่มเล่นเสียง`);
@@ -251,7 +242,6 @@ const playVoicePlaylist = (
           const path = voicePaths[currentIndex];
           const fullUrl = `${VOICE_DOMAIN}${path}`;
 
-          // ถ้าไฟล์โหลดไม่สำเร็จ ให้ข้ามไปไฟล์ถัดไป
           if (sound.state() !== "loaded") {
             console.warn(`[Audio] ข้ามไฟล์เสียงที่โหลดไม่สำเร็จ: ${fullUrl}`);
             currentIndex++;
@@ -264,7 +254,6 @@ const playVoicePlaylist = (
           sound.once("end", () => {
             console.log(`[Audio] เล่นไฟล์เสียงเสร็จสิ้น ${currentIndex + 1}/${sounds.length}: ${fullUrl}`);
             currentIndex++;
-            // เล่นไฟล์ถัดไปทันทีโดยไม่มี gap
             playNext();
           });
 
@@ -286,7 +275,6 @@ const playVoicePlaylist = (
           }
         };
 
-        // เริ่มเล่นไฟล์แรก
         playNext();
       })
       .catch((error) => {
@@ -299,7 +287,7 @@ const playVoicePlaylist = (
 const updateCallStatus = async (vn: string) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 seconds timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     const response = await fetch("/api/data/call/update", {
       method: "POST",
@@ -340,7 +328,7 @@ export default function SinglePage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
-  const id = resolvedParams.id; // id จาก URL (คงที่)
+  const id = resolvedParams.id;
 
   const [setting, setSetting] = useState<Setting | null>(null);
   const [visitData, setVisitData] = useState<VisitInfo[]>([]);
@@ -351,33 +339,26 @@ export default function SinglePage({
   const [error, setError] = useState<string | null>(null);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const isPausedRef = useRef(false);
-  const isUpdatingCallStatusRef = useRef(false); // ตรวจสอบว่ากำลัง update call status อยู่หรือไม่
+  const isUpdatingCallStatusRef = useRef(false);
   const currentSoundRef = useRef<Howl | null>(null);
   
-  // เก็บ VN ที่เล่นแล้วเพื่อป้องกันการเล่นซ้ำ (ลบหลังจาก 5 วินาที)
   const playedVnSetRef = useRef<Set<string>>(new Set());
   const vnCleanupTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  // แสดงโฆษณาแบบหน้าแยก (overlay) หลังหน่วงเวลา และแสดงค้าง 20 วิ
   const [showSplitAd, setShowSplitAd] = useState(false);
   
-  // Auto-switch state สำหรับ id 214/215
   const autoSwitchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autoSwitchInfoRef = useRef<{ nextId: string; delaySeconds: number } | null>(null);
   
-  // currentDisplayId สำหรับสลับ id โดยไม่เปลี่ยน URL
   const [currentDisplayId, setCurrentDisplayId] = useState<string>(id);
   
-  // Animation state สำหรับ transition
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [transitionOpacity, setTransitionOpacity] = useState(0);
   const previousDisplayIdRef = useRef<string>(id);
   const transitionInProgressRef = useRef<boolean>(false);
   
-  // Initialize currentDisplayId เมื่อ id จาก URL เปลี่ยน
   useEffect(() => {
     setCurrentDisplayId(id);
     previousDisplayIdRef.current = id;
-    // Clear data เมื่อเปลี่ยน URL
     setVisitData([]);
     setActiveData([]);
     setSkippedData([]);
@@ -385,11 +366,9 @@ export default function SinglePage({
 
   useNetworkError();
 
-  // Setup audio unlock listeners
   useEffect(() => {
     unlockAudioContext();
 
-    // ตรวจสอบสถานะการ unlock ทุก 500ms
     const checkInterval = setInterval(() => {
       if (isAudioContextUnlocked()) {
         setAudioUnlocked(true);
@@ -400,16 +379,13 @@ export default function SinglePage({
     return () => clearInterval(checkInterval);
   }, []);
 
-  // Fetch setting ตาม currentDisplayId
   useEffect(() => {
     if (!currentDisplayId) return;
 
     const fetchSetting = async () => {
       try {
-        // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
         if (USE_MOCK_DATA) {
           console.log('[Mock] ใช้ mock setting data สำหรับ id:', currentDisplayId);
-          // Simulate API delay
           await new Promise(resolve => setTimeout(resolve, 300));
           const mockSetting = getMockSetting(currentDisplayId);
           setSetting(mockSetting);
@@ -421,7 +397,6 @@ export default function SinglePage({
         if (result.success) {
           setSetting(result.data);
           
-          // ตรวจสอบ autoSwitch metadata สำหรับ id 214/215
           if (result.autoSwitch && result.autoSwitch.enabled) {
             autoSwitchInfoRef.current = {
               nextId: result.autoSwitch.nextId,
@@ -429,9 +404,7 @@ export default function SinglePage({
             };
             console.log(`[AutoSwitch] ตั้งค่า auto-switch: ${currentDisplayId} → ${result.autoSwitch.nextId} ใน ${result.autoSwitch.delaySeconds} วินาที`);
             
-            // เริ่ม timer ทันทีหลังจากได้ autoSwitch info (ถ้า URL id เป็น 214/215 และไม่มี popup)
             if ((id === '214' || id === '215') && !showCallPopup && autoSwitchInfoRef.current) {
-              // Clear timer เก่าก่อน
               if (autoSwitchTimerRef.current) {
                 clearTimeout(autoSwitchTimerRef.current);
                 autoSwitchTimerRef.current = null;
@@ -446,7 +419,6 @@ export default function SinglePage({
               }, delaySeconds * 1000);
             }
           } else {
-            // ถ้าไม่มี autoSwitch ให้ clear info และ timer
             autoSwitchInfoRef.current = null;
             if (autoSwitchTimerRef.current) {
               clearTimeout(autoSwitchTimerRef.current);
@@ -463,25 +435,21 @@ export default function SinglePage({
       }
     };
 
-    // ตรวจสอบว่าเป็นการเปลี่ยน ID (transition) หรือ initialization
     const isTransition = transitionInProgressRef.current;
     
     if (isTransition) {
-      // ถ้าเป็นการ transition ให้ delay 1s เพื่อให้ข้อมูลเปลี่ยนระหว่างที่สีฟ้าเต็มจอ
       console.log(`[Fetch] Delay 1s เพื่อให้ข้อมูลเปลี่ยนระหว่างที่ overlay สีฟ้าเต็มจอ`);
       const timeoutId = setTimeout(() => {
         fetchSetting();
-      }, 1000); // delay 1s หลัง fade in เสร็จ (ระหว่างที่สีฟ้าเต็มจอ)
+      }, 1000);
       
       return () => {
         clearTimeout(timeoutId);
       };
     } else {
-      // Initial load - fetch ทันที
       fetchSetting();
     }
     
-    // Refresh setting ทุก 3 นาที
     const interval = setInterval(() => fetchSetting(), 3 * 60 * 1000);
 
     return () => {
@@ -489,9 +457,7 @@ export default function SinglePage({
     };
   }, [currentDisplayId, id, showCallPopup]);
 
-  // Animation: fade in/out เมื่อ currentDisplayId เปลี่ยน
   useEffect(() => {
-    // ตรวจสอบว่า currentDisplayId เปลี่ยนจริงๆ (ไม่ใช่ initialization)
     if (currentDisplayId === previousDisplayIdRef.current) return;
     
     const newDisplayId = currentDisplayId;
@@ -499,40 +465,29 @@ export default function SinglePage({
     
     console.log(`[Transition] เริ่ม animation: ${oldDisplayId} → ${newDisplayId}`);
     
-    // เริ่ม transition
     setIsTransitioning(true);
     transitionInProgressRef.current = true;
     
-    // Phase 1: Fade in (1 วินาที)
-    setTransitionOpacity(0); // เริ่มจาก 0
-    // ใช้ setTimeout เล็กน้อยเพื่อให้ browser render ก่อน
+    setTransitionOpacity(0);
     setTimeout(() => {
-      setTransitionOpacity(1); // fade in ถึง 1
+      setTransitionOpacity(1);
     }, 10);
     
-    // Phase 2: หลังจาก fade in เสร็จ (1s) → ข้อมูลจะเปลี่ยน
-    // (ข้อมูลจะเปลี่ยนอัตโนมัติผ่าน useEffect fetchSetting ที่ delay 1s)
-    
-    // Phase 3: Fade out หลังจาก fade in เสร็จ (1s)
     setTimeout(() => {
-      setTransitionOpacity(0); // fade out กลับไป 0
+      setTransitionOpacity(0);
       
-      // Phase 4: เสร็จสิ้น transition หลัง fade out เสร็จ (1s)
       setTimeout(() => {
         setIsTransitioning(false);
         transitionInProgressRef.current = false;
         previousDisplayIdRef.current = newDisplayId;
         console.log(`[Transition] เสร็จสิ้น animation`);
-      }, 1000); // fade out duration
-    }, 1000); // รอให้ fade in เสร็จ (1s)
+      }, 1000);
+    }, 1000);
     
   }, [currentDisplayId]);
 
-  // Auto-switch logic: เริ่ม/รีเซ็ต timer และสลับ currentDisplayId (ทำงานเมื่อ URL id เป็น 214 หรือ 215)
   useEffect(() => {
-    // ตรวจสอบว่า URL id เป็น 214 หรือ 215 และมี autoSwitch info
     if (!(id === '214' || id === '215') || !autoSwitchInfoRef.current) {
-      // ถ้าไม่ใช่ 214/215 หรือไม่มี autoSwitch ให้ clear timer
       if (autoSwitchTimerRef.current) {
         clearTimeout(autoSwitchTimerRef.current);
         autoSwitchTimerRef.current = null;
@@ -540,29 +495,24 @@ export default function SinglePage({
       return;
     }
 
-    // Clear timer เก่าก่อน (จะเริ่มใหม่ด้านล่าง)
     if (autoSwitchTimerRef.current) {
       clearTimeout(autoSwitchTimerRef.current);
       autoSwitchTimerRef.current = null;
     }
 
-    // ถ้า popup เปิดอยู่ ไม่เริ่ม timer (รอให้ popup ปิดก่อน)
     if (showCallPopup) {
       console.log(`[AutoSwitch] รอให้ popup ปิดก่อนเริ่ม timer`);
       return;
     }
 
-    // เริ่ม timer เมื่อไม่มี popup
     const { nextId, delaySeconds } = autoSwitchInfoRef.current;
     console.log(`[AutoSwitch] เริ่มนับเวลา ${delaySeconds} วินาทีเพื่อสลับไป id ${nextId}`);
     
     autoSwitchTimerRef.current = setTimeout(() => {
       console.log(`[AutoSwitch] ครบเวลาแล้ว กำลังสลับไป id ${nextId}`);
-      // สลับ currentDisplayId โดยไม่เปลี่ยน URL (จะ trigger animation อัตโนมัติ)
       setCurrentDisplayId(nextId);
     }, delaySeconds * 1000);
 
-    // Cleanup เมื่อ component unmount หรือ dependencies เปลี่ยน
     return () => {
       if (autoSwitchTimerRef.current) {
         clearTimeout(autoSwitchTimerRef.current);
@@ -571,24 +521,17 @@ export default function SinglePage({
     };
   }, [currentDisplayId, showCallPopup, id]);
 
-  // WebSocket connection - ใช้ currentDisplayId และ re-register เมื่อเปลี่ยน
   useEffect(() => {
-    if (!currentDisplayId || !audioUnlocked) return;
+    if (!USE_MOCK_DATA) return;
 
-    // ใช้ mock data ถ้าเปิด USE_MOCK_DATA
-    if (USE_MOCK_DATA) {
-      console.log('[Mock] ใช้ mock WebSocket data สำหรับ id:', currentDisplayId);
+      console.log('[Mock] ใช้ mock API data สำหรับ id:', currentDisplayId);
       
-      // ตั้งค่า mock data ทันที
       setVisitData(generateMockVisitData());
       setActiveData(generateMockActiveData());
       setSkippedData(generateMockSkippedData());
       
-      // Simulate data update ทุก 5 วินาที
       const mockInterval = setInterval(() => {
-        // สุ่มเปลี่ยนข้อมูลเล็กน้อยเพื่อให้ดูเหมือนมีการอัปเดต
         const newVisitData = generateMockVisitData();
-        // สลับลำดับ queue numbers เพื่อให้ดูมีการเปลี่ยนแปลง
         newVisitData.forEach((visit, index) => {
           visit.visit_q_no = `A00${(index + Math.floor(Date.now() / 5000) % 8) + 1}`;
         });
@@ -604,12 +547,14 @@ export default function SinglePage({
         setActiveData([]);
         setSkippedData([]);
       };
-    }
+  }, [currentDisplayId]);
+
+  useEffect(() => {
+    if (!currentDisplayId || !audioUnlocked || USE_MOCK_DATA) return;
 
     const wsUrl = `wss://monitor.aztecthstudio.com/ws/`;
     const ws = new WebSocket(wsUrl);
     
-    // เก็บ WebSocket instance เพื่อตรวจสอบว่า message มาจาก connection นี้หรือไม่
     let isConnectionActive = true;
 
     ws.onopen = () => {
@@ -618,20 +563,18 @@ export default function SinglePage({
       ws.send(
         JSON.stringify({
           type: "register",
-          id: currentDisplayId, // ใช้ currentDisplayId แทน id จาก URL
+          id: currentDisplayId,
           query_type: "triple",
         })
       );
     };
 
     ws.onmessage = async (event) => {
-      // ตรวจสอบว่า connection ยัง active อยู่หรือไม่ (ป้องกัน message จาก connection เก่า)
       if (!isConnectionActive) {
         console.log(`[WebSocket] ข้าม message เนื่องจาก connection ไม่ active`);
         return;
-      }
+            }
 
-      // ไม่รับ call message ถ้ากำลัง paused หรือกำลัง update call status
       if (isPausedRef.current || isUpdatingCallStatusRef.current) {
         console.log(`[WebSocket] ข้าม call message เนื่องจาก isPaused: ${isPausedRef.current}, isUpdatingCallStatus: ${isUpdatingCallStatusRef.current}`);
         return;
@@ -640,7 +583,7 @@ export default function SinglePage({
         const data = JSON.parse(event.data);
         if (data.wait && Array.isArray(data.wait)) {
           setVisitData(data.wait);
-        }
+          }
         if (data.active && Array.isArray(data.active)) {
           setActiveData(data.active);
         }
@@ -648,96 +591,84 @@ export default function SinglePage({
           setSkippedData(data.skip);
         }
         if (data.call) {
-          // ตรวจสอบ VN ก่อนเป็นอันดับแรก (สำคัญที่สุด)
-          const vn = data.call.vn;
-          if (vn && playedVnSetRef.current.has(vn)) {
+          const vn = data.call.vn || data.call.visit_id;
+              if (vn && playedVnSetRef.current.has(vn)) {
             console.log(`[Call] ข้าม call message เนื่องจาก VN ${vn} เล่นไปแล้ว (ตรวจสอบ VN ก่อน)`);
-            return; // ข้าม call message นี้ทันที
-          }
-
-          // ตรวจสอบ paused และ updating status (ตรวจสอบหลังจาก VN)
-          if (isPausedRef.current || isUpdatingCallStatusRef.current) {
-            console.log(`[Call] ข้าม call message เนื่องจาก isPaused: ${isPausedRef.current}, isUpdatingCallStatus: ${isUpdatingCallStatusRef.current}`);
-            return;
-          }
-
-          // เก็บ VN ไว้ใน set ทันที (ก่อนเล่นเสียง) เพื่อป้องกันการเล่นซ้ำ
-          if (vn) {
-            // ตรวจสอบอีกครั้งก่อนเก็บ (ป้องกัน race condition)
-            if (playedVnSetRef.current.has(vn)) {
-              console.log(`[Call] ข้าม call message เนื่องจาก VN ${vn} เล่นไปแล้ว (double check)`);
-              return;
-            }
-
-            playedVnSetRef.current.add(vn);
-            console.log(`[Call] เก็บ VN ${vn} ไว้ในรายการที่เล่นแล้ว (ก่อนเล่นเสียง)`);
-
-            // Clear timer เก่าถ้ามี (กรณีที่ VN เดียวกันมาใหม่ก่อน 5 วินาที)
-            const existingTimer = vnCleanupTimersRef.current.get(vn);
-            if (existingTimer) {
-              clearTimeout(existingTimer);
-              console.log(`[Call] Clear timer เก่าสำหรับ VN ${vn}`);
-            }
-
-            // สร้าง timer เพื่อลบ VN หลังจาก 5 วินาที
-            const cleanupTimer = setTimeout(() => {
-              const deleted = playedVnSetRef.current.delete(vn);
-              vnCleanupTimersRef.current.delete(vn);
-              if (deleted) {
-                console.log(`[Call] ลบ VN ${vn} ออกจากรายการที่เล่นแล้ว (ผ่านไป 5 วินาที)`);
+                return;
               }
-            }, 5000); // 5 วินาที
 
-            vnCleanupTimersRef.current.set(vn, cleanupTimer);
-          }
+              if (isPausedRef.current || isUpdatingCallStatusRef.current) {
+            console.log(`[Call] ข้าม call message เนื่องจาก isPaused: ${isPausedRef.current}, isUpdatingCallStatus: ${isUpdatingCallStatusRef.current}`);
+                return;
+              }
 
-          // ตั้งค่า paused และ updating flag (หลังจากเก็บ VN แล้ว)
-          isPausedRef.current = true;
-          isUpdatingCallStatusRef.current = true;
+              if (vn) {
+                if (playedVnSetRef.current.has(vn)) {
+              console.log(`[Call] ข้าม call message เนื่องจาก VN ${vn} เล่นไปแล้ว (double check)`);
+                  return;
+                }
+
+                playedVnSetRef.current.add(vn);
+                console.log(`[Call] เก็บ VN ${vn} ไว้ในรายการที่เล่นแล้ว (ก่อนเล่นเสียง)`);
+
+                const existingTimer = vnCleanupTimersRef.current.get(vn);
+                if (existingTimer) {
+                  clearTimeout(existingTimer);
+                  console.log(`[Call] Clear timer เก่าสำหรับ VN ${vn}`);
+                }
+
+                const cleanupTimer = setTimeout(() => {
+                  const deleted = playedVnSetRef.current.delete(vn);
+                  vnCleanupTimersRef.current.delete(vn);
+                  if (deleted) {
+                    console.log(`[Call] ลบ VN ${vn} ออกจากรายการที่เล่นแล้ว (ผ่านไป 5 วินาที)`);
+                  }
+            }, 5000);
+
+                vnCleanupTimersRef.current.set(vn, cleanupTimer);
+              }
+
+              isPausedRef.current = true;
+              isUpdatingCallStatusRef.current = true;
           setCallData(data.call);
-          setShowCallPopup(true);
+              setShowCallPopup(true);
 
           const hasVoice =
             data.call.voice &&
             Array.isArray(data.call.voice) &&
             data.call.voice.length > 0;
 
-          try {
-            // เล่นเสียง (ถ้ามี)
-            if (hasVoice) {
+              try {
+                if (hasVoice) {
               await playVoicePlaylist(
                 data.call.voice,
                 currentSoundRef
               );
-            }
+                }
 
-            // Update call status (รอให้เสร็จก่อน)
-            if (vn) {
-              console.log(`[Call] กำลัง update call status สำหรับ vn: ${vn}`);
-              await updateCallStatus(vn);
-              console.log(`[Call] update call status เสร็จแล้วสำหรับ vn: ${vn}`);
-            }
+                if (vn) {
+                  console.log(`[Call] กำลัง update call status สำหรับ vn: ${vn}`);
+                  await updateCallStatus(vn);
+                  console.log(`[Call] update call status เสร็จแล้วสำหรับ vn: ${vn}`);
+                }
 
-            // หลังจากเสียงพูดจบและ update เสร็จแล้ว รอ 2 วินาทีแล้วปิด popup
-            setTimeout(() => {
-              setShowCallPopup(false);
-              isPausedRef.current = false;
-              isUpdatingCallStatusRef.current = false;
+                setTimeout(() => {
+                  setShowCallPopup(false);
+                  isPausedRef.current = false;
+                  isUpdatingCallStatusRef.current = false;
               console.log(`[Call] พร้อมรับ call message ถัดไป`);
-            }, 2000);
-          } catch (error) {
-            console.error("[Call] เกิดข้อผิดพลาดในการประมวลผล call:", error);
-            // ถ้าเกิด error ก็ให้ reset flags
-            setTimeout(() => {
-              setShowCallPopup(false);
-              isPausedRef.current = false;
-              isUpdatingCallStatusRef.current = false;
-            }, 2000);
-          }
-        }
+                }, 2000);
+              } catch (error) {
+                console.error("[Call] เกิดข้อผิดพลาดในการประมวลผล call:", error);
+                setTimeout(() => {
+                  setShowCallPopup(false);
+                  isPausedRef.current = false;
+                  isUpdatingCallStatusRef.current = false;
+                }, 2000);
+              }
+            }
       } catch (e) {
         console.error("Error parsing WebSocket message:", e);
-        // Reset flags เมื่อเกิด error
         isPausedRef.current = false;
         isUpdatingCallStatusRef.current = false;
       }
@@ -752,27 +683,21 @@ export default function SinglePage({
       isConnectionActive = false;
     };
 
-    // Cleanup: close connection และ clear data เมื่อ currentDisplayId เปลี่ยน
     return () => {
-      isConnectionActive = false; // Mark connection as inactive ก่อน close
+      isConnectionActive = false;
       ws.close();
-      // Clear data เมื่อเปลี่ยน id
       setVisitData([]);
       setActiveData([]);
       setSkippedData([]);
-      // ไม่ clear VN cleanup timers เพื่อให้ timer ทำงานต่อ
-      // VN จะถูกลบหลังจาก 5 วินาที (นับจากตอนที่เก็บ VN)
-      // เก็บ playedVnSet ไว้เพื่อป้องกันการเล่นซ้ำเมื่อ re-connect
     };
   }, [currentDisplayId, audioUnlocked]);
 
-  // โฆษณาแบบหน้าแยก: หน่วงเวลาแล้วแสดง 20 วิ
   useEffect(() => {
     if (!setting) return;
     if (setting.ads && setting.ads_type === 'split') {
       const delaySec = setting.time_wait ? parseInt(String(setting.time_wait)) : 20;
       const delayMs = isNaN(delaySec) ? 20000 : delaySec * 1000;
-      const showDurationMs = 20 * 1000; // ค้างไว้ 20 วิ (fix)
+      const showDurationMs = 20 * 1000;
 
       let showTimer: NodeJS.Timeout | null = null;
       let hideTimer: NodeJS.Timeout | null = null;
@@ -829,7 +754,6 @@ export default function SinglePage({
         <CallPopup setting={setting} callData={callData} />
       )}
       
-      {/* Transition Overlay - สีฟ้า fade in/out */}
       {isTransitioning && (
         <div
           className={styles.transitionOverlay}
@@ -844,12 +768,10 @@ export default function SinglePage({
       <Header setting={setting} />
 
       <main className={styles.mainContent}>
-        {/* แสดงรูปโฆษณาฝั่งซ้าย (ads_type = 'left') */}
         {(() => {
           const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');
           if (!enableAds || setting.ads_type !== "left") return null;
           
-          // ใช้ ads_path_left ถ้ามี ไม่เช่นนั้นใช้ ads (backward compatibility)
           const leftAdsUrl = setting.ads_path_left || setting.ads;
           return leftAdsUrl ? (
             <div className={styles.adsContainer}>
@@ -866,12 +788,10 @@ export default function SinglePage({
           ) : null;
         })()}
         <InterviewTable setting={setting} visitData={visitData} />
-        {/* แสดงรูปโฆษณาฝั่งขวา (ads_type = 'right') */}
         {(() => {
           const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');
           if (!enableAds || setting.ads_type !== "right") return null;
           
-          // ใช้ ads_path_right ถ้ามี ไม่เช่นนั้นใช้ ads (backward compatibility)
           const rightAdsUrl = setting.ads_path_right || setting.ads;
           return rightAdsUrl ? (
             <div className={styles.adsContainer}>
@@ -889,12 +809,10 @@ export default function SinglePage({
         })()}
       </main>
 
-      {/* Overlay โฆษณาแบบหน้าแยก (split) */}
       {(() => {
         const enableAds = setting.enable_ads ?? (setting.ads && setting.ads !== '' && setting.ads !== 'false');
         if (!enableAds || setting.ads_type !== 'split' || !showSplitAd) return null;
         
-        // ใช้ ads_path_left ถ้ามี ไม่เช่นนั้นใช้ ads (backward compatibility)
         const splitAdsUrl = setting.ads_path_left || setting.ads;
         return splitAdsUrl ? (
           <div className={styles.adsOverlay}>

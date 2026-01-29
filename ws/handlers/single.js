@@ -90,7 +90,7 @@ WHERE
     AND T1.visit_date = @visit_date 
     AND T1.status = N'รอ'
 ORDER BY
-    T2.priority_rate DESC`;
+    T2.priority_rate DESC, T1.check_in ASC`;
 
     const activeQuery = `
      SELECT
@@ -109,7 +109,7 @@ WHERE
     AND T1.visit_date = @visit_date 
     AND T1.status = N'กำลัง'
 ORDER BY
-    T2.priority_rate DESC, T1.time_call ASC`;
+    T2.priority_rate DESC, T1.check_in ASC`;
 
     const callQuery = `
       SELECT TOP(1) T1.*, 
@@ -126,7 +126,7 @@ ORDER BY
     WHERE T1.visit_date = @visit_date
       AND T1.status_call = '1'
       AND T1.code_dept_id IN (${deptPlaceholders})
-    ORDER BY T2.priority_rate DESC, T1.time_call ASC`;
+    ORDER BY T2.priority_rate DESC, T1.check_in ASC`;
     
     const skipQuery = `SELECT * FROM monitor_visit_info WHERE visit_date = @visit_date AND status = N'ข้าม' AND code_dept_id IN (${deptPlaceholders})`;
 
